@@ -17,3 +17,7 @@
         "modifiedOn": "2026-03-23T11:26:00.210"
     }
 }
+
+ERROR: Exception occurred in _adviserService.GetAdviserDetails - The method or operation is not implemented. | StackTrace:    at Ade.Club51.Lambda.Contract.Update.Services.ContractUpdateService.GetCaseDetails(RequestData input) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Services\ContractUpdateService.cs:line 31
+   at Ade.Club51.Lambda.Contract.Update.Function.FunctionHandlerInternalAsync(RequestData input, ILambdaContext context) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Function.cs:line 131
+INFO: FunctionHandler execution completed.
