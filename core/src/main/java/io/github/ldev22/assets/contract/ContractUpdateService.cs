@@ -27,6 +27,9 @@ public class ContractUpdateService : IContractUpdateService
                 ? Guid.NewGuid().ToString()
                 : input.ContactDetail.ContractDetailId;
 
+            var productId = await ResolveProductId(connection, input.ContactDetail?.ProductName);
+            var payMethodId = await ResolvePayMethodId(connection, input.ContactDetail?.PayMethod);
+
             using var command = connection.CreateCommand();
 
             command.CommandText = @"
@@ -102,10 +105,10 @@ public class ContractUpdateService : IContractUpdateService
             AddPositionalParameter(command, contractDetailId);
             AddPositionalParameter(command, input.CaseId);
             AddPositionalParameter(command, input.ContactDetail?.ContractNumber);
-            AddPositionalParameter(command, input.ContactDetail?.ProductName);
+            AddPositionalParameter(command, productId);
             AddPositionalParameter(command, input.ContactDetail?.InvestType);
             AddPositionalParameter(command, input.ContactDetail?.InvestAmount);
-            AddPositionalParameter(command, input.ContactDetail?.PayMethod);
+            AddPositionalParameter(command, payMethodId);
             AddPositionalParameter(command, input.ContactDetail?.CommAllowance);
             AddPositionalParameter(command, input.ContactDetail?.FpFee);
             AddPositionalParameter(command, input.ContactDetail?.NegCommAllowance);
@@ -266,5 +269,105 @@ public class ContractUpdateService : IContractUpdateService
         param.ParameterName = $"p{command.Parameters.Count + 1}";
         param.Value = value ?? DBNull.Value;
         command.Parameters.Add(param);
+    }
+
+    private async Task<object?> ResolveProductId(IDbConnection connection, string? productName)
+    {
+        if (string.IsNullOrWhiteSpace(productName))
+        {
+            return null;
+        }
+
+        var id = await TryLookupNumericId(
+            connection,
+            "PRODUCT",
+            new[] { "PRODUCT_ID", "PRODUCTID", "ID" },
+            new[] { "PRODUCT_NAME", "PRODUCTNAME", "NAME", "DESCRIPTION" },
+            productName
+        );
+
+        if (id == null)
+        {
+            LambdaLogger.Log($"WARN: Could not resolve PRODUCT id for productName '{productName}'. Setting CD_PRODUCT_ID to NULL.");
+        }
+
+        return id;
+    }
+
+    private async Task<object?> ResolvePayMethodId(IDbConnection connection, string? payMethod)
+    {
+        if (string.IsNullOrWhiteSpace(payMethod))
+        {
+            return null;
+        }
+
+        var id = await TryLookupNumericId(
+            connection,
+            "FIFTYONECLUB_PAYMETHOD",
+            new[] { "PM_ID", "PAYMETHOD_ID", "PAYMETHODID", "ID" },
+            new[] { "PM_NAME", "PAYMETHOD", "PAY_METHOD", "NAME", "DESCRIPTION" },
+            payMethod
+        );
+
+        if (id == null)
+        {
+            LambdaLogger.Log($"WARN: Could not resolve PAYMETHOD id for payMethod '{payMethod}'. Setting CD_PM_ID to NULL.");
+        }
+
+        return id;
+    }
+
+    private async Task<object?> TryLookupNumericId(
+        IDbConnection connection,
+        string tableName,
+        IReadOnlyList<string> idColumnCandidates,
+        IReadOnlyList<string> nameColumnCandidates,
+        string matchValue)
+    {
+        foreach (var idCol in idColumnCandidates)
+        {
+            foreach (var nameCol in nameColumnCandidates)
+            {
+                try
+                {
+                    using var cmd = connection.CreateCommand();
+                    cmd.CommandText = $"SELECT {idCol} FROM {tableName} WHERE UPPER({nameCol}) = UPPER(:v) LIMIT 1";
+
+                    var p = cmd.CreateParameter();
+                    p.ParameterName = "v";
+                    p.Value = matchValue;
+                    cmd.Parameters.Add(p);
+
+                    if (cmd is not System.Data.Common.DbCommand dbCommand)
+                    {
+                        throw new InvalidOperationException($"Command type '{cmd.GetType().FullName}' does not support async scalar operations.");
+                    }
+
+                    var result = await dbCommand.ExecuteScalarAsync();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        LambdaLogger.Log($"INFO: Resolved {tableName} id using {nameCol}->{idCol} for '{matchValue}'.");
+                        return result;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ex = ex.InnerException ?? ex;
+                    if (ex.Message != null && ex.Message.IndexOf("invalid identifier", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        continue;
+                    }
+
+                    if (ex.Message != null && ex.Message.IndexOf("does not exist", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        continue;
+                    }
+
+                    LambdaLogger.Log($"WARN: TryLookupNumericId failed for {tableName} with idCol '{idCol}' and nameCol '{nameCol}': {ex.Message}");
+                }
+            }
+        }
+
+        return null;
     }
 }
