@@ -163,7 +163,15 @@ public class ContractUpdateService : IContractUpdateService
             throw;
         }
 
-        LambdaLogger.Log($"INFO: DebugListAccessibleTables found {tables.Count} tables. First items: {JsonConvert.SerializeObject(tables.Take(20).ToList())}");
+        LambdaLogger.Log($"INFO: DebugListAccessibleTables found {tables.Count} tables.");
+
+        var batchSize = 25;
+        for (var i = 0; i < tables.Count; i += batchSize)
+        {
+            var batch = tables.Skip(i).Take(batchSize).ToList();
+            LambdaLogger.Log($"INFO: DebugListAccessibleTables tables[{i}..{Math.Min(i + batchSize, tables.Count) - 1}]: {JsonConvert.SerializeObject(batch)}");
+        }
+
         return tables;
     }
 
