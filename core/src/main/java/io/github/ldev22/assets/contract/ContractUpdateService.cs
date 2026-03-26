@@ -30,7 +30,7 @@ public class ContractUpdateService : IContractUpdateService
             using var command = connection.CreateCommand();
 
             command.CommandText = @"
-        MERGE INTO CONTRACT_DETAILS t
+        MERGE INTO FIFTYONECLUB_CONTRACTDETAIL t
         USING (
             SELECT
                 ? AS CONTRACT_DETAIL_ID,
