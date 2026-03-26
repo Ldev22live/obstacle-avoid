@@ -10,6 +10,6 @@ namespace Ade.Club51.Case.Details.Interface
 {
     public interface ICaseDetailsService
     {
-        Task<ResponseData> GetCaseDetails(RequestData input);
+        Task<ResponseData> UpdateContractDetail(RequestData input);
     }
 }

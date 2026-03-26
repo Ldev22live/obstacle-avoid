@@ -21,6 +21,7 @@ namespace Ade.Club51.Case.Details.Config
         public string DbEdrTableExceptionExclusionLog { get; }
         public string DbEdrTableNotes { get; }
         public string DbEdrProcViewed { get; }
+        public string DbEdrProcContractDetailUpdate { get; }
 
         public DatabaseConfig() {
             DbEdrAccount = Environment.GetEnvironmentVariable("DB_EDR_ACCOUNT")
@@ -49,6 +50,9 @@ namespace Ade.Club51.Case.Details.Config
                 throw new ArgumentNullException("DB_EDR_TABLE_NOTES environment variable is not set.");
             DbEdrProcViewed = Environment.GetEnvironmentVariable("DB_EDR_PROC_SP_LOG_RECENTLY_VIEWED_CASE") ??
                throw new ArgumentNullException("DB_EDR_PROC_SP_LOG_RECENTLY_VIEWED_CASE environment variable is not set.");
+
+            DbEdrProcContractDetailUpdate = Environment.GetEnvironmentVariable("DB_EDR_PROC_SP_CONTRACT_DETAIL_UPDATE") ??
+               throw new ArgumentNullException("DB_EDR_PROC_SP_CONTRACT_DETAIL_UPDATE environment variable is not set.");
         } 
     }
 

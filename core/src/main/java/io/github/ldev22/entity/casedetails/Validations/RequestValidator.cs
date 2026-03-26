@@ -25,12 +25,38 @@ namespace Ade.Club51.Case.Details.Validations
             }
             else
             {
-                LambdaLogger.Log($"INFO: Validating AdviserId: {input.CaseId}");
+                LambdaLogger.Log($"INFO: Validating CaseId: {input.CaseId}");
 
                 if (string.IsNullOrWhiteSpace(input.CaseId))
                 {
-                    errors.Add("AdviserId is required.");
-                    LambdaLogger.Log("ERROR: Validation failed - AdviserId is missing or empty.");
+                    errors.Add("CaseId is required.");
+                    LambdaLogger.Log("ERROR: Validation failed - CaseId is missing or empty.");
+                }
+
+                if (input.ContactDetail == null)
+                {
+                    errors.Add("ContactDetail is required.");
+                    LambdaLogger.Log("ERROR: Validation failed - ContactDetail is missing.");
+                }
+                else
+                {
+                    if (string.IsNullOrWhiteSpace(input.ContactDetail.ContractNumber))
+                    {
+                        errors.Add("ContactDetail.ContractNumber is required.");
+                        LambdaLogger.Log("ERROR: Validation failed - ContractNumber is missing or empty.");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(input.ContactDetail.ProductName))
+                    {
+                        errors.Add("ContactDetail.ProductName is required.");
+                        LambdaLogger.Log("ERROR: Validation failed - ProductName is missing or empty.");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(input.ContactDetail.CreatedBy))
+                    {
+                        errors.Add("ContactDetail.CreatedBy is required.");
+                        LambdaLogger.Log("ERROR: Validation failed - CreatedBy is missing or empty.");
+                    }
                 }
                
             }

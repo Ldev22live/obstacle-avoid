@@ -9,6 +9,24 @@ namespace Ade.Club51.Case.Details.Models
     public class RequestData
     {
         public string CaseId { get; set; }
-        public string UserCode { get; set; }
+        public ContactDetail ContactDetail { get; set; }
+    }
+
+    public class ContactDetail
+    {
+        public string ContractDetailId { get; set; }
+        public string ContractNumber { get; set; }
+        public string ProductName { get; set; }
+        public string InvestType { get; set; }
+        public string InvestAmount { get; set; }
+        public string PayMethod { get; set; }
+        public string CommAllowance { get; set; }
+        public string FpFee { get; set; }
+        public string NegCommAllowance { get; set; }
+        public string NegCommPercentage { get; set; }
+        public string CreatedBy { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public string ModifiedBy { get; set; }
+        public DateTime ModifiedOn { get; set; }
     }
 }
