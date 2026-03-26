@@ -119,6 +119,13 @@ public class Function
                 await contractUpdateService.DebugListAccessibleTables();
             }
 
+            var debugDescribeContractDetail = bool.TryParse(Environment.GetEnvironmentVariable("DEBUG_DESCRIBE_CONTRACTDETAIL"), out var debugDescribeEnabled) && debugDescribeEnabled;
+            if (debugDescribeContractDetail && _caseDetailsService is ContractUpdateService contractUpdateService2)
+            {
+                LambdaLogger.Log("INFO: DEBUG_DESCRIBE_CONTRACTDETAIL enabled. Describing FIFTYONECLUB_CONTRACTDETAIL columns...");
+                await contractUpdateService2.DebugDescribeTableColumns("FIFTYONECLUB_CONTRACTDETAIL");
+            }
+
             LambdaLogger.Log("INFO: Calling _adviserService.GetAdviserDetails...");
             var response = await _caseDetailsService.UpdateContract(input);
 

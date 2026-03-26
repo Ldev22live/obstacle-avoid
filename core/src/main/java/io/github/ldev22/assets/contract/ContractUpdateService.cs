@@ -117,6 +117,18 @@ public class ContractUpdateService : IContractUpdateService
         {
             ex = ex.InnerException ?? ex;
             LambdaLogger.Log($"ERROR: {ex.Message} | StackTrace: {ex.StackTrace}");
+
+            try
+            {
+                if (ex.Message != null && ex.Message.IndexOf("invalid identifier", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    await DebugDescribeTableColumns("FIFTYONECLUB_CONTRACTDETAIL");
+                }
+            }
+            catch
+            {
+            }
+
             throw;
         }
 
@@ -136,7 +148,7 @@ public class ContractUpdateService : IContractUpdateService
             using var command = connection.CreateCommand();
             command.CommandText = "SHOW TABLES";
 
-            if (command is not DbCommand dbCommand)
+            if (command is not System.Data.Common.DbCommand dbCommand)
             {
                 throw new InvalidOperationException($"Command type '{command.GetType().FullName}' does not support async reader operations.");
             }
@@ -168,11 +180,79 @@ public class ContractUpdateService : IContractUpdateService
         var batchSize = 25;
         for (var i = 0; i < tables.Count; i += batchSize)
         {
-            var batch = tables.Skip(i).Take(batchSize).ToList();
-            LambdaLogger.Log($"INFO: DebugListAccessibleTables tables[{i}..{Math.Min(i + batchSize, tables.Count) - 1}]: {JsonConvert.SerializeObject(batch)}");
+            var end = System.Math.Min(i + batchSize, tables.Count);
+            var batch = new List<string>(end - i);
+            for (var j = i; j < end; j++)
+            {
+                batch.Add(tables[j]);
+            }
+
+            LambdaLogger.Log($"INFO: DebugListAccessibleTables tables[{i}..{end - 1}]: {JsonConvert.SerializeObject(batch)}");
         }
 
         return tables;
+    }
+
+    public async Task<IReadOnlyList<string>> DebugDescribeTableColumns(string tableName, int maxColumns = 200)
+    {
+        if (string.IsNullOrWhiteSpace(tableName))
+        {
+            throw new ArgumentException("Table name cannot be null or empty.", nameof(tableName));
+        }
+
+        var columns = new List<string>();
+
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = $"DESCRIBE TABLE {tableName}";
+
+            if (command is not System.Data.Common.DbCommand dbCommand)
+            {
+                throw new InvalidOperationException($"Command type '{command.GetType().FullName}' does not support async reader operations.");
+            }
+
+            using var reader = await dbCommand.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                if (columns.Count >= maxColumns)
+                {
+                    break;
+                }
+
+                var name = reader["name"]?.ToString();
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    columns.Add(name);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ex = ex.InnerException ?? ex;
+            LambdaLogger.Log($"ERROR: DebugDescribeTableColumns failed - {ex.Message} | StackTrace: {ex.StackTrace}");
+            throw;
+        }
+
+        LambdaLogger.Log($"INFO: DebugDescribeTableColumns({tableName}) found {columns.Count} columns.");
+
+        var batchSize = 25;
+        for (var i = 0; i < columns.Count; i += batchSize)
+        {
+            var end = System.Math.Min(i + batchSize, columns.Count);
+            var batch = new List<string>(end - i);
+            for (var j = i; j < end; j++)
+            {
+                batch.Add(columns[j]);
+            }
+
+            LambdaLogger.Log($"INFO: DebugDescribeTableColumns({tableName}) columns[{i}..{end - 1}]: {JsonConvert.SerializeObject(batch)}");
+        }
+
+        return columns;
     }
 
     // Helper method for positional parameters
