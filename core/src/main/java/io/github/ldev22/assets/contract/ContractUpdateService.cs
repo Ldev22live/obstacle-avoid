@@ -341,6 +341,7 @@ public class ContractUpdateService : IContractUpdateService
 
                     var p = cmd.CreateParameter();
                     p.ParameterName = "v";
+                    p.DbType = DbType.String;
                     p.Value = matchValue;
                     cmd.Parameters.Add(p);
 
