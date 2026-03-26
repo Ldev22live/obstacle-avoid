@@ -1,0 +1,37 @@
+INFO: Lambda function invoked. ARN: arn:aws:lambda:::function:Ade.Club51.Lambda.Contract.Update::Ade.Club51.Lambda.Contract.Update.Function::FunctionHandler
+INFO: Extracting AWS Lambda context for Dynatrace tracing...
+INFO: Starting request processing...
+INFO: FunctionHandlerInternalAsync invoked.
+INFO: Received input: {"CaseId":"5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc","ContactDetail":{"ContractDetailId":"ecbe2bc9-5c6d-469d-be07-02893dca4938","ContractNumber":"19604880","ProductName":"Orion - SP","InvestType":"Single Premium","InvestAmount":"23.00","PayMethod":"Debit Order","CommAllowance":"100.00","FpFee":"222.00","NegCommAllowance":"100.00","NegCommPercentage":"100.00","CreatedBy":"OneConnectBA","CreatedOn":"2026-03-23T03:33:35.601","ModifiedBy":"OneConnectBA","ModifiedOn":"2026-03-23T11:26:00.21"}}
+INFO: Starting input validation...
+INFO: Validation started.
+INFO: Validating AdviserId: 5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc
+INFO: Validation passed successfully.
+INFO: Input validation passed successfully.
+INFO: Calling _adviserService.GetAdviserDetails...
+INFO: UpdateContract called with input: {"CaseId":"5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc","ContactDetail":{"ContractDetailId":"ecbe2bc9-5c6d-469d-be07-02893dca4938","ContractNumber":"19604880","ProductName":"Orion - SP","InvestType":"Single Premium","InvestAmount":"23.00","PayMethod":"Debit Order","CommAllowance":"100.00","FpFee":"222.00","NegCommAllowance":"100.00","NegCommPercentage":"100.00","CreatedBy":"OneConnectBA","CreatedOn":"2026-03-23T03:33:35.601","ModifiedBy":"OneConnectBA","ModifiedOn":"2026-03-23T11:26:00.21"}}
+INFO: Creating Snowflake database connection.
+INFO: Generating Snowflake connection string.
+INFO: Connection string generated successfully. Masking sensitive details for logs.
+INFO: Using connection string: account=pg70172;user=SRV_DAE_TECH;password=******;scheme=https;host=pg70172.eu-west-1.snowflakecomputing.com;port=443;db=dev_source;schema=CLUB51;insecureMode=true
+INFO: SnowflakeDbConnection instance created successfully.
+ERROR: Error: SQL compilation error: error line 36 at position 12
+invalid identifier 'CONTRACT_DETAIL_ID' SqlState: 42000, VendorCode: 904, QueryId: 01c34bc1-0309-aa85-0001-ed4217fdcde6 | StackTrace:    at Snowflake.Data.Core.SFStatement.BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
+   at Snowflake.Data.Core.SFStatement.ExecuteAsync(Int32 timeout, String sql, Dictionary`2 bindings, Boolean describeOnly, Boolean asyncExec, CancellationToken cancellationToken)
+   at Snowflake.Data.Client.SnowflakeDbCommand.ExecuteNonQueryAsync(CancellationToken cancellationToken)
+   at ContractUpdateService.UpdateContract(RequestData input) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Services\ContractUpdateService.cs:line 130
+INFO: Creating Snowflake database connection.
+INFO: Generating Snowflake connection string.
+INFO: Connection string generated successfully. Masking sensitive details for logs.
+INFO: Using connection string: account=pg70172;user=SRV_DAE_TECH;password=******;scheme=https;host=pg70172.eu-west-1.snowflakecomputing.com;port=443;db=dev_source;schema=CLUB51;insecureMode=true
+INFO: SnowflakeDbConnection instance created successfully.
+INFO: DebugDescribeTableColumns(FIFTYONECLUB_CONTRACTDETAIL) found 23 columns.
+INFO: DebugDescribeTableColumns(FIFTYONECLUB_CONTRACTDETAIL) columns[0..22]: ["CD_ID","CD_CASE_ID","CD_NEWPOLICYPREMIUMID","CD_CONTRACTNUMBER","CD_PRODUCT_ID","CD_INVESTTYPE","CD_INVESTAMOUNT","CD_PF_ID","CD_PM_ID","CD_COMMALLOWANCE","CD_FPFEE","CD_NEGCOMMALLOWANCE","CD_NEGCOMMPERCENTAGE","CD_CREATEDBY","CD_CREATEDON","CD_MODIFIEDBY","CD_MODIFIED","CD_RECORDEDDATETIME","CD_ISDELETED","CD_STARTDATE","CD_ENDDATE","CD_INSERTDATE","INCIDENTID"]
+ERROR: Exception occurred in _adviserService.GetAdviserDetails - Error: SQL compilation error: error line 36 at position 12
+invalid identifier 'CONTRACT_DETAIL_ID' SqlState: 42000, VendorCode: 904, QueryId: 01c34bc1-0309-aa85-0001-ed4217fdcde6 | StackTrace:    at Snowflake.Data.Core.SFStatement.BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
+   at Snowflake.Data.Core.SFStatement.ExecuteAsync(Int32 timeout, String sql, Dictionary`2 bindings, Boolean describeOnly, Boolean asyncExec, CancellationToken cancellationToken)
+   at Snowflake.Data.Client.SnowflakeDbCommand.ExecuteNonQueryAsync(CancellationToken cancellationToken)
+   at ContractUpdateService.UpdateContract(RequestData input) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Services\ContractUpdateService.cs:line 130
+   at ContractUpdateService.UpdateContract(RequestData input) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Services\ContractUpdateService.cs:line 150
+   at Ade.Club51.Lambda.Contract.Update.Function.FunctionHandlerInternalAsync(RequestData input, ILambdaContext context) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Function.cs:line 133
+INFO: FunctionHandler execution completed.
