@@ -124,6 +124,49 @@ public class ContractUpdateService : IContractUpdateService
         return response;
     }
 
+    public async Task<IReadOnlyList<string>> DebugListAccessibleTables(int maxTables = 200)
+    {
+        var tables = new List<string>();
+
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SHOW TABLES";
+
+            if (command is not DbCommand dbCommand)
+            {
+                throw new InvalidOperationException($"Command type '{command.GetType().FullName}' does not support async reader operations.");
+            }
+
+            using var reader = await dbCommand.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                if (tables.Count >= maxTables)
+                {
+                    break;
+                }
+
+                var name = reader["name"]?.ToString();
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    tables.Add(name);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ex = ex.InnerException ?? ex;
+            LambdaLogger.Log($"ERROR: DebugListAccessibleTables failed - {ex.Message} | StackTrace: {ex.StackTrace}");
+            throw;
+        }
+
+        LambdaLogger.Log($"INFO: DebugListAccessibleTables found {tables.Count} tables. First items: {JsonConvert.SerializeObject(tables.Take(20).ToList())}");
+        return tables;
+    }
+
     // Helper method for positional parameters
     private void AddPositionalParameter(IDbCommand command, object value)
     {
