@@ -1,0 +1,5 @@
+public class RequestData
+{
+    public string CaseId { get; set; }
+    public string UserCode { get; set; }
+}
