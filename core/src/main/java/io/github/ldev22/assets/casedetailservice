@@ -1,0 +1,375 @@
+public class CaseDetailsService : ICaseDetailsService
+{
+    private readonly ISnowflakeConnectionFactory _connectionFactory;
+    private readonly DatabaseConfig _dbConfig;
+
+    public CaseDetailsService(ISnowflakeConnectionFactory connectionFactory, DatabaseConfig dbConfig)
+    {
+        _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+        _dbConfig = dbConfig ?? throw new ArgumentNullException(nameof(dbConfig));
+
+        LambdaLogger.Log("INFO: CaseDetailsService initialized successfully.");
+    }
+
+    //public async Task<ResponseData> GetCaseDetails(RequestData input)
+    //{
+    //    LambdaLogger.Log($"INFO: GetCaseDetails called with input: {JsonConvert.SerializeObject(input)}");
+
+    //    var response = new ResponseData();
+
+    //    try
+    //    {
+    //        var searchHelper = new SearchDataHelper(_connectionFactory, _dbConfig);
+    //        var rawData = await searchHelper.GetSearchData(input);
+
+    //        // Map CaseDetail
+    //        if (rawData.Data.CaseDetail != null)
+    //        {
+    //            var cd = rawData.Data.CaseDetail;
+    //            response.Data.CaseDetail = new CaseDetail
+    //            {
+    //                CaseId = cd.CaseId,
+    //                ContractNumber = cd.ContractNumber,
+    //                InitiatedOn = cd.InitiatedOn,
+    //                LastUpdated = cd.LastUpdated,
+    //                AssignedTo = cd.AssignedTo,
+    //                Source = cd.Source,
+    //                ClientType = cd.ClientType,
+    //                ClientInitials = cd.ClientInitials,
+    //                ClientLastName = cd.ClientLastName,
+    //                ClientDob = cd.ClientDob,
+    //                CompanyName = cd.CompanyName,
+    //                Location = cd.Location,
+    //                ProductCode = cd.ProductCode,
+    //                ProductName = cd.ProductName,
+    //                SplitCommission = cd.SplitCommission,
+    //                AdviserCode = cd.AdviserCode,
+    //                AdviserName = cd.AdviserName,
+    //                FirstName = cd.FirstName,
+    //                LastName = cd.LastName,
+    //                AdviserStatus = cd.AdviserStatus,
+    //                SalesCode = cd.SalesCode,
+    //                ManuallyUpdated = cd.ManuallyUpdated,
+    //                CaseStatus = cd.CaseStatus,
+    //                CreatedBy = cd.CreatedBy,
+    //                CreatedOn = cd.CreatedOn,
+    //                LastModifiedBy = cd.LastModifiedBy,
+    //                LastModifiedDate = cd.LastModifiedDate,
+    //                LastRunDate = cd.LastRunDate,
+    //                teamOwner = cd.teamOwner,
+    //                teamOwnerCode = cd.teamOwnerCode,
+    //                OrgInfo = cd.OrgInfo ?? new System.Collections.Generic.List<OrgInfoDetail>()
+    //            };
+    //        }
+
+    //        // Map FinancialInfo list
+    //        if (rawData.Data.FinancialInfo != null && rawData.Data.FinancialInfo.Any())
+    //        {
+    //            response.Data.FinancialInfo = rawData.Data.FinancialInfo.Select(fi => new FinancialInfo
+    //            {
+    //                BusinessKey = fi.BusinessKey,
+    //                CaseId = fi.CaseId,
+    //                ContractNumber = fi.ContractNumber,
+    //                AssignedTo = fi.AssignedTo,
+    //                IsPrimary = fi.IsPrimary,
+    //                SplitType = fi.SplitType,
+    //                AdviserCode = fi.AdviserCode,
+    //                AdviserName = fi.AdviserName,
+    //                FirstName = fi.FirstName,
+    //                LastName = fi.LastName,
+    //                AdviserStatus = fi.AdviserStatus,
+    //                SalesCode = fi.SalesCode,
+    //                CommPercentage = fi.CommPercentage,
+    //                FigPercentage = fi.FigPercentage,
+    //                NegCommPercentage = fi.NegCommPercentage,
+    //                CaseCount = fi.CaseCount,
+    //                CreatedBy = fi.CreatedBy,
+    //                CreatedOn = fi.CreatedOn,
+    //                LastModifiedBy = fi.LastModifiedBy,
+    //                LastModifiedDate = fi.LastModifiedDate,
+    //                TeamNameChain = fi.TeamNameChain,
+    //                OrgInfo = fi.OrgInfo ?? new System.Collections.Generic.List<OrgInfoDetail>()
+    //            }).ToList();
+
+    //            // Populate top-level adviser from primary FinancialInfo
+    //            var primaryAdviser = response.Data.FinancialInfo.FirstOrDefault(f => f.IsPrimary.Equals("Yes", StringComparison.OrdinalIgnoreCase))
+    //                                 ?? response.Data.FinancialInfo.FirstOrDefault();
+
+    //            if (primaryAdviser != null)
+    //            {
+    //                response.Data.CaseDetail.FirstName = primaryAdviser.FirstName;
+    //                response.Data.CaseDetail.LastName = primaryAdviser.LastName;
+    //                response.Data.CaseDetail.AdviserName = primaryAdviser.AdviserName;
+    //                response.Data.CaseDetail.AdviserCode = primaryAdviser.AdviserCode;
+    //                response.Data.CaseDetail.SalesCode = primaryAdviser.SalesCode;
+    //                response.Data.CaseDetail.AdviserStatus = primaryAdviser.AdviserStatus;
+    //                response.Data.CaseDetail.OrgInfo = primaryAdviser.OrgInfo;
+    //            }
+    //        }
+
+    //        // Map ContractDetails
+    //        if (rawData.Data.ContractDetails != null && rawData.Data.ContractDetails.Any())
+    //        {
+    //            response.Data.ContractDetails = rawData.Data.ContractDetails.Select(cd => new ContractDetail
+    //            {
+    //                BusinessKey = cd.BusinessKey,
+    //                CaseId = cd.CaseId,
+    //                ContractNumber = cd.ContractNumber,
+    //                AssignedTo = cd.AssignedTo,
+    //                IsPrimary = cd.IsPrimary,
+    //                ProductCode = cd.ProductCode,
+    //                ProductName = cd.ProductName,
+    //                InvestType = cd.InvestType,
+    //                InvestAmount = cd.InvestAmount,
+    //                PayFrequency = cd.PayFrequency,
+    //                PayMethod = cd.PayMethod,
+    //                CommAllowance = cd.CommAllowance,
+    //                FpFee = cd.FpFee,
+    //                CommAllowFp = cd.CommAllowFp,
+    //                NegCommAllowance = cd.NegCommAllowance,
+    //                NegCommPercentage = cd.NegCommPercentage,
+    //                CreatedBy = cd.CreatedBy,
+    //                CreatedOn = cd.CreatedOn,
+    //                LastModifiedBy = cd.LastModifiedBy,
+    //                LastModifiedDate = cd.LastModifiedDate
+    //            }).ToList();
+    //        }
+
+    //        // Map Exceptions
+    //        if (rawData.Data.Exceptions != null && rawData.Data.Exceptions.Any())
+    //        {
+    //            response.Data.Exceptions = rawData.Data.Exceptions.Select(ex => new ExceptionElement
+    //            {
+    //                CaseId = ex.CaseId,
+    //                ContractNumber = ex.ContractNumber,
+    //                BusinessKey = ex.BusinessKey,
+    //                SalesCode = ex.SalesCode,
+    //                AdviserCode = ex.AdviserCode,
+    //                AdviserName = ex.AdviserName,
+    //                Location = ex.Location,
+    //                InvestAmount = ex.InvestAmount,
+    //                CommAllowance = ex.CommAllowance,
+    //                CommPercentage = ex.CommPercentage,
+    //                FigPercentage = ex.FigPercentage,
+    //                ErrorType = ex.ErrorType,
+    //                ErrorMsg = ex.ErrorMsg,
+    //                CreatedBy = ex.CreatedBy,
+    //                CreatedOn = ex.CreatedOn,
+    //                LastModifiedBy = ex.LastModifiedBy,
+    //                LastModifiedDate = ex.LastModifiedDate
+    //            }).ToList();
+    //        }
+
+    //        // Map Notes
+    //        if (rawData.Data.Notes != null && rawData.Data.Notes.Any())
+    //        {
+    //            response.Data.Notes = rawData.Data.Notes.Select(n => new Note
+    //            {
+    //                CaseId = n.CaseId,
+    //                NoteContent = n.NoteContent,
+    //                AddBy = n.AddBy,
+    //                AddDate = n.AddDate
+    //            }).ToList();
+    //        }
+
+    //        response.IsValid = true;
+    //        response.StatusCode = 200;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        ex = ex.InnerException ?? ex;
+    //        LambdaLogger.Log($"ERROR: {ex.Message} | StackTrace: {ex.StackTrace}");
+    //        response.IsValid = false;
+    //        response.StatusCode = 500;
+    //        response.Errors.Add(ex.Message);
+    //    }
+
+    //    LambdaLogger.Log($"INFO: GetCaseDetails completed. Response: {JsonConvert.SerializeObject(response)}");
+    //    return response;
+    //}
+    public async Task<ResponseData> GetCaseDetails(RequestData input)
+    {
+        LambdaLogger.Log($"INFO: GetCaseDetails called with input: {JsonConvert.SerializeObject(input)}");
+
+        var response = new ResponseData();
+
+        try
+        {
+            var searchHelper = new SearchDataHelper(_connectionFactory, _dbConfig);
+            var rawData = await searchHelper.GetSearchData(input);
+
+            if (rawData.Data.CaseDetail != null)
+            {
+                var cd = rawData.Data.CaseDetail;
+                response.Data.CaseDetail = new CaseDetail
+                {
+                    CaseId = cd.CaseId,
+                    ContractNumber = cd.ContractNumber,
+                    InitiatedOn = cd.InitiatedOn,
+                    LastUpdated = cd.LastUpdated,
+                    AssignedTo = cd.AssignedTo,
+                    Source = cd.Source,
+                    ClientType = cd.ClientType,
+                    ClientInitials = cd.ClientInitials,
+                    ClientLastName = cd.ClientLastName,
+                    ClientDob = cd.ClientDob,
+                    CompanyName = cd.CompanyName,
+                    Location = cd.Location,
+                    ProductCode = cd.ProductCode,
+                    ProductName = cd.ProductName,
+                    SplitCommission = cd.SplitCommission,
+                    AdviserCode = cd.AdviserCode,
+                    AdviserName = cd.AdviserName,
+                    FirstName = cd.FirstName,
+                    LastName = cd.LastName,
+                    AdviserStatus = cd.AdviserStatus,
+                    SalesCode = cd.SalesCode,
+                    ManuallyUpdated = cd.ManuallyUpdated,
+                    CaseStatus = cd.CaseStatus,
+                    CreatedBy = cd.CreatedBy,
+                    CreatedOn = cd.CreatedOn,
+                    LastModifiedBy = cd.LastModifiedBy,
+                    LastModifiedDate = cd.LastModifiedDate,
+                    LastRunDate = cd.LastRunDate,
+                    teamOwner = cd.teamOwner,
+                    teamOwnerCode = cd.teamOwnerCode,
+                    OrgInfo = cd.OrgInfo ?? new List<OrgInfoDetail>()
+                };
+            }
+
+            if (rawData.Data.FinancialInfo != null && rawData.Data.FinancialInfo.Any())
+            {
+                response.Data.FinancialInfo = rawData.Data.FinancialInfo.Select(fi => new FinancialInfo
+                {
+                    BusinessKey = fi.BusinessKey,
+                    CaseId = fi.CaseId,
+                    ContractNumber = string.IsNullOrWhiteSpace(fi.ContractNumber)
+                        ? response.Data.CaseDetail?.ContractNumber
+                        : fi.ContractNumber,
+                    AssignedTo = fi.AssignedTo,
+                    IsPrimary = fi.IsPrimary,
+                    SplitType = fi.SplitType,
+                    AdviserCode = fi.AdviserCode,
+                    AdviserName = fi.AdviserName,
+                    FirstName = fi.FirstName,
+                    LastName = fi.LastName,
+                    AdviserStatus = fi.AdviserStatus,
+                    SalesCode = fi.SalesCode,
+                    CommPercentage = fi.CommPercentage,
+                    FigPercentage = fi.FigPercentage,
+                    NegCommPercentage = fi.NegCommPercentage,
+                    CaseCount = fi.CaseCount,
+                    CreatedBy = fi.CreatedBy,
+                    CreatedOn = fi.CreatedOn,
+                    LastModifiedBy = fi.LastModifiedBy,
+                    LastModifiedDate = fi.LastModifiedDate,
+                    TeamNameChain = fi.TeamNameChain,
+                    OrgInfo = fi.OrgInfo ?? new List<OrgInfoDetail>()
+                }).ToList();
+
+                var primaryAdviser =
+                    response.Data.FinancialInfo
+                        .FirstOrDefault(f => string.Equals(f.IsPrimary, "Yes", StringComparison.OrdinalIgnoreCase))
+                    ?? response.Data.FinancialInfo.FirstOrDefault();
+
+                if (primaryAdviser != null && response.Data.CaseDetail != null)
+                {
+                    response.Data.CaseDetail.FirstName = primaryAdviser.FirstName;
+                    response.Data.CaseDetail.LastName = primaryAdviser.LastName;
+                    response.Data.CaseDetail.AdviserName = primaryAdviser.AdviserName;
+                    response.Data.CaseDetail.AdviserCode = primaryAdviser.AdviserCode;
+                    response.Data.CaseDetail.SalesCode = primaryAdviser.SalesCode;
+                    response.Data.CaseDetail.AdviserStatus = primaryAdviser.AdviserStatus;
+                    response.Data.CaseDetail.OrgInfo = primaryAdviser.OrgInfo;
+
+                    response.Data.CaseDetail.ContractNumber =
+                        !string.IsNullOrWhiteSpace(primaryAdviser.ContractNumber)
+                            ? primaryAdviser.ContractNumber
+                            : response.Data.CaseDetail.ContractNumber;
+                }
+            }
+
+            if (rawData.Data.ContractDetails != null && rawData.Data.ContractDetails.Any())
+            {
+                response.Data.ContractDetails = rawData.Data.ContractDetails.Select(cd => new ContractDetail
+                {
+                    BusinessKey = cd.BusinessKey,
+                    CaseId = cd.CaseId,
+                    ContractNumber = cd.ContractNumber,
+                    AssignedTo = cd.AssignedTo,
+                    IsPrimary = cd.IsPrimary,
+                    ProductCode = cd.ProductCode,
+                    ProductName = cd.ProductName,
+                    InvestType = cd.InvestType,
+                    InvestAmount = cd.InvestAmount,
+                    PayFrequency = cd.PayFrequency,
+                    PayMethod = cd.PayMethod,
+                    CommAllowance = cd.CommAllowance,
+                    FpFee = cd.FpFee,
+                    CommAllowFp = cd.CommAllowFp,
+                    NegCommAllowance = cd.NegCommAllowance,
+                    NegCommPercentage = cd.NegCommPercentage,
+                    CreatedBy = cd.CreatedBy,
+                    CreatedOn = cd.CreatedOn,
+                    LastModifiedBy = cd.LastModifiedBy,
+                    LastModifiedDate = cd.LastModifiedDate
+                }).ToList();
+            }
+
+            if (rawData.Data.Exceptions != null && rawData.Data.Exceptions.Any())
+            {
+                var fallbackContractNumber = response.Data.CaseDetail?.ContractNumber;
+
+                response.Data.Exceptions = rawData.Data.Exceptions.Select(ex => new ExceptionElement
+                {
+                    CaseId = ex.CaseId,
+                    ContractNumber =
+                        !string.IsNullOrWhiteSpace(ex.ContractNumber)
+                            ? ex.ContractNumber
+                            : fallbackContractNumber,
+                    BusinessKey = ex.BusinessKey,
+                    SalesCode = ex.SalesCode,
+                    AdviserCode = ex.AdviserCode,
+                    AdviserName = ex.AdviserName,
+                    Location = ex.Location,
+                    InvestAmount = ex.InvestAmount,
+                    CommAllowance = ex.CommAllowance,
+                    CommPercentage = ex.CommPercentage,
+                    FigPercentage = ex.FigPercentage,
+                    ErrorType = ex.ErrorType,
+                    ErrorMsg = ex.ErrorMsg,
+                    CreatedBy = ex.CreatedBy,
+                    CreatedOn = ex.CreatedOn,
+                    LastModifiedBy = ex.LastModifiedBy,
+                    LastModifiedDate = ex.LastModifiedDate
+                }).ToList();
+            }
+
+            if (rawData.Data.Notes != null && rawData.Data.Notes.Any())
+            {
+                response.Data.Notes = rawData.Data.Notes.Select(n => new Note
+                {
+                    CaseId = n.CaseId,
+                    NoteContent = n.NoteContent,
+                    AddBy = n.AddBy,
+                    AddDate = n.AddDate
+                }).ToList();
+            }
+
+            response.IsValid = true;
+            response.StatusCode = 200;
+        }
+        catch (Exception ex)
+        {
+            ex = ex.InnerException ?? ex;
+            LambdaLogger.Log($"ERROR: {ex.Message} | StackTrace: {ex.StackTrace}");
+            response.IsValid = false;
+            response.StatusCode = 500;
+            response.Errors.Add(ex.Message);
+        }
+
+        LambdaLogger.Log($"INFO: GetCaseDetails completed. Response: {JsonConvert.SerializeObject(response)}");
+        return response;
+    }
+
+}
