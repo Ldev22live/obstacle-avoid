@@ -1,0 +1,162 @@
+﻿using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Text.Json;
+
+namespace Ade.Club51.Case.Details.Models
+{
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public  class ResponseData
+    {
+        public Data Data { get; set; } = new Data();
+        public bool IsValid { get; set; } = false;
+        public long StatusCode { get; set; } = 400;
+        public List<string> Messages { get; set; } = new List<string>();
+        public List<string> Errors { get; set; } = new List<string>();
+    }
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public  class Data
+    {
+        public CaseDetail CaseDetail { get; set; } = new CaseDetail();
+        public List<Note> Notes { get; set; } = new List<Note>();  // Empty list, not default object
+        public List<FinancialInfo> FinancialInfo { get; set; } = new List<FinancialInfo>(); // Empty list
+        public List<ContractDetail> ContractDetails { get; set; } = new List<ContractDetail>(); // Empty list
+        public List<ExceptionElement> Exceptions { get; set; } = new List<ExceptionElement>(); // Empty list
+    }
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public  class CaseDetail
+    {
+        public DateTime InitiatedOn { get; set; } 
+        public string LastUpdated { get; set; } 
+        public string AssignedTo { get; set; } = string.Empty;
+     
+        public string CaseId { get; set; } = string.Empty;
+        public string ContractNumber { get; set; } = string.Empty;
+        public string Source { get; set; } = string.Empty;
+        public string ClientType { get; set; } = string.Empty;
+        public string ClientInitials { get; set; } = string.Empty;
+        public string ClientLastName { get; set; } = string.Empty;
+        public string ClientDob { get; set; } = string.Empty;
+        public dynamic CompanyName { get; set; } = string.Empty;
+        public dynamic Location { get; set; } = string.Empty;
+        public string ProductCode { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
+        public string SplitCommission { get; set; } = string.Empty;
+        public string AdviserCode { get; set; } = string.Empty;
+        public string AdviserName { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string AdviserStatus { get; set; } = string.Empty;
+        public string SalesCode { get; set; } = string.Empty;
+        public string ManuallyUpdated { get; set; } = string.Empty;
+        public string CaseStatus { get; set; } = string.Empty;
+        public string CreatedBy { get; set; } = string.Empty;
+        public DateTime CreatedOn { get; set; } 
+        public string LastModifiedBy { get; set; } 
+        public DateTime LastModifiedDate { get; set; } 
+        public DateTime LastRunDate { get; set; }
+        public string teamOwner { get; set; } = string.Empty;
+        public string teamOwnerCode { get; set; } = string.Empty;
+        public List<OrgInfoDetail> OrgInfo { get; set; } = new List<OrgInfoDetail> { new OrgInfoDetail() };
+    }
+
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public class FinancialInfo
+    {
+        public string BusinessKey { get; set; } = string.Empty;
+        public string CaseId { get; set; } = string.Empty;
+        public string ContractNumber { get; set; } = string.Empty;
+        public string AssignedTo { get; set; } = string.Empty;
+        public string IsPrimary { get; set; } = string.Empty;
+        public string SplitType { get; set; } = string.Empty;
+        public string AdviserCode { get; set; } = string.Empty;
+        public string AdviserName { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string AdviserStatus { get; set; } = string.Empty;
+        public string SalesCode { get; set; } = string.Empty;
+        public string CommPercentage { get; set; } = string.Empty;
+        public string FigPercentage { get; set; } = string.Empty;
+        public string NegCommPercentage { get; set; } = string.Empty;
+        public string CaseCount { get; set; } = string.Empty;
+        public string CreatedBy { get; set; } = string.Empty;
+        public DateTime CreatedOn { get; set; } 
+        public string LastModifiedBy { get; set; } = string.Empty;
+        public DateTime LastModifiedDate { get; set; } 
+        public string TeamNameChain { get; set; } = string.Empty;
+        public List<OrgInfoDetail> OrgInfo { get; set; } = new List<OrgInfoDetail> { };
+    }
+
+
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public class OrgInfoDetail
+    {
+        public string Area { get; set; } = string.Empty;
+        public string Region { get; set; } = string.Empty;
+        public string OmTeamCode { get; set; } = string.Empty;
+        public string TeamName { get; set; } = string.Empty;
+    }
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public  class ContractDetail
+    {
+        public string BusinessKey { get; set; } = string.Empty;
+        public string CaseId { get; set; } = string.Empty;
+        public string ContractNumber { get; set; } = string.Empty;
+        public string AssignedTo { get; set; } = string.Empty;
+        public string IsPrimary { get; set; } = string.Empty;
+        public string ProductCode { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
+        public string InvestType { get; set; } = string.Empty;
+        public string InvestAmount { get; set; } = string.Empty;
+        public string PayFrequency { get; set; } = string.Empty;
+        public string PayMethod { get; set; } = string.Empty;
+        public string CommAllowance { get; set; } = string.Empty;
+        public dynamic FpFee { get; set; } = string.Empty;
+        public dynamic CommAllowFp { get; set; } = string.Empty;
+        public string NegCommAllowance { get; set; } = string.Empty;
+        public string NegCommPercentage { get; set; } = string.Empty;
+        public string CreatedBy { get; set; } = string.Empty;
+        public DateTime CreatedOn { get; set; } 
+        public string LastModifiedBy { get; set; } = string.Empty;
+        public DateTime LastModifiedDate { get; set; }
+    }
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public  class ExceptionElement
+    {
+        public string CaseId { get; set; } = string.Empty;
+        public string ContractNumber { get; set; } = string.Empty;
+        public string BusinessKey { get; set; } = string.Empty;
+        public string SalesCode { get; set; } = string.Empty;
+        public string AdviserCode { get; set; } = string.Empty;
+        public string AdviserName { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public string InvestAmount { get; set; } = string.Empty;
+        public string CommAllowance { get; set; } = string.Empty;
+        public string CommPercentage { get; set; } = string.Empty;
+        public string FigPercentage { get; set; } = string.Empty;
+        public string ErrorType { get; set; } = string.Empty;
+        public string ErrorMsg { get; set; } = string.Empty;
+        public string CreatedBy { get; set; } = string.Empty;
+        public DateTime CreatedOn { get; set; } 
+        public string LastModifiedBy { get; set; } = string.Empty;
+        public DateTime LastModifiedDate { get; set; } 
+    }
+   
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+
+    public class Note
+    {
+        public string CaseId { get; set; } = string.Empty;
+        public string NoteContent { get; set; } = string.Empty;
+        public string AddBy { get; set; } = string.Empty;
+        public DateTime AddDate { get; set; } 
+    }
+
+
+
+
+}

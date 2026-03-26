@@ -1,0 +1,36 @@
+{
+  "profiles": {
+    "Ade.Club51.Case.Details": {
+      "commandName": "Executable",
+      "executablePath": "%USERPROFILE%\\.dotnet\\tools\\dotnet-lambda-test-tool-8.0.exe",
+      "commandLineArgs": "--port 5051",
+      "workingDirectory": ".\\bin\\Debug\\net8.0",
+      "environmentVariables": {
+        "DB_EDR_ACCOUNT": "pg70172",
+        "DB_EDR_DB": "source",
+        "DB_EDR_SCHEMA_CLUB51": "CLUB51",
+        "DB_EDR_SERVER": "pg70172.eu-west-1.snowflakecomputing.com",
+        "DB_EDR_USER": "SRV_DAE_TECH",
+        "DB_EDR_PASSWORD": "JR_='F9&[KGYqM]7",
+        "DB_EDR_PORT": "443",
+        "DB_EDR_TABLE_CASE": "FIFTYONECLUB_CASE",
+        "DB_EDR_TABLE_FINANCIALINFORMATION": "FIFTYONECLUB_FINANCIALINFORMATION",
+        "DB_EDR_TABLE_CONTRACTDETAIL": "FIFTYONECLUB_CONTRACTDETAIL",
+        "DB_EDR_TABLE_EXCEPTIONEXCLUSIONLOG": "FIFTYONECLUB_EXCEPTIONEXCLUSIONLOG",
+        "DB_EDR_TABLE_NOTES": "FIFTYONECLUB_NOTES",
+        "DB_EDR_PROC_SP_LOG_RECENTLY_VIEWED_CASE": "SP_LOG_RECENTLY_VIEWED_CASE",
+        "DT_CLUSTER_ID": "1889348772",
+        "DT_CONNECTION_AUTH_TOKEN": "dt0a01.pao86152.8eb92a31f67f3d18bfa62ec56caf6f1fefeb09015bee0e222169d3e4f5f7afe3",
+        "DT_CONNECTION_BASE_URL": "https://pao86152.live.dynatrace.com",
+        "DT_TENANT": "pao86152",
+        "DT_USE_AWS_LAMBDA_CONFIGURATIONS": "false"
+      }
+    },
+    "Mock Lambda Test Tool": {
+      "commandName": "Executable",
+      "commandLineArgs": "--port 5050",
+      "workingDirectory": ".\\bin\\$(Configuration)\\net8.0",
+      "executablePath": "%USERPROFILE%\\.dotnet\\tools\\dotnet-lambda-test-tool-8.0.exe"
+    }
+  }
+}

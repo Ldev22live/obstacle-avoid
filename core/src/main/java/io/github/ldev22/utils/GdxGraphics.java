@@ -4,6 +4,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 import static jdk.internal.misc.Blocker.begin;
 import static sun.jvm.hotspot.runtime.PerfMemory.end;
@@ -25,40 +27,44 @@ public class GdxGraphics {
         action.run();
         batch.end();
     }
+
+
+    public static void drawGrid(Viewport viewport, ShapeRenderer renderer, int cellSize){
+        Color oldColor = new Color(renderer.getColor());
+
+        float worldWidth = viewport.getWorldWidth();
+        float worldHeight = viewport.getWorldHeight();
+
+        float doubleWorldWidth = worldWidth * 2;
+        float doubleWorldHeight = worldHeight * 2;
+
+        renderer.begin(ShapeRenderer.ShapeType.Line);
+        renderer.setColor(Color.BLACK);
+        //vertical lines
+        for(float x = -doubleWorldWidth; x < doubleWorldWidth; x += cellSize){
+            renderer.setColor(Color.WHITE);
+            renderer.line(x, -doubleWorldHeight, x, doubleWorldHeight);
+        }
+
+        //horizontal lines
+        for(float y = -doubleWorldHeight; y < doubleWorldHeight; y+= cellSize){
+            renderer.setColor(Color.WHITE);
+            renderer.line(-doubleWorldWidth, y, doubleWorldWidth, y);
+        }
+
+        //axis lines(red)
+        renderer.setColor(Color.RED);
+
+        renderer.line(0f, -doubleWorldHeight, 0f, doubleWorldHeight);
+        renderer.line(-doubleWorldWidth, 0f, doubleWorldWidth, 0f);
+
+        //world bounds
+        renderer.setColor(Color.YELLOW);
+        renderer.line(0f, worldHeight, worldWidth, worldHeight);
+        renderer.line(worldWidth, 0f, worldWidth, worldHeight);
+
+        renderer.end();
+
+        renderer.setColor(oldColor);
+    }
 }
-
-/*@JvmOverload
-fun Viewport.drawGrid(renderer : ShapeRenderer, cellSize : Int = 1){
-	val oldColor = renderer.color.cpy()
-	val doubleWorldWidth = worldWidth * 2
-	val doubleWorldHeight = worldHeight * 2
-
-	renderer.use{
-		renderer.color = Color.WHITE
-		//draw vertical lines
-
-		var x = -doubleWorldWidth
-		while(x < doubleWorldWidth){
-			renderer.line(x - doubleWorldHeight, x, doubleWorldHeight)
-			x += cellSize
-		}
-
-		var y = -doubleWorldHeight
-		while(y < doubleWorldHeight){
-			renderer.line(-doubleWorldWidth, y, doubleWorldWidth, y)
-			y += cellSize
-		}
-
-		render.color = Color.RED
-		renderer.line(0f, -doubleWorldHeight, 0f, doubleWorldHeight)
-
-		renderer.line(-doubleWorldWidth, 0f, doubleWorldWidth, 0f)
-
-		//world bounds
-		render.color = Color.YELLOW
-		renderer.line(0f, worldHeight, worldWidth, worldHeight)
-		renderer.line(worldWidth, 0f, worldWidth, worldHeight)
-	}
-
-	renderer.color = oldColor
-} */
