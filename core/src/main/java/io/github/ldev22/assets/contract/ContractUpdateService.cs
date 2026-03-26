@@ -268,7 +268,11 @@ public class ContractUpdateService : IContractUpdateService
         var param = command.CreateParameter();
         param.ParameterName = $"p{command.Parameters.Count + 1}";
 
-        if (value is string)
+        if (value == null || value == DBNull.Value)
+        {
+            param.DbType = DbType.String;
+        }
+        else if (value is string)
         {
             param.DbType = DbType.String;
         }
