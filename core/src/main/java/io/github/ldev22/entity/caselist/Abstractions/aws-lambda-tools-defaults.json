@@ -14,3 +14,51 @@
   "function-timeout": 30,
   "function-handler": "Ade.Club51.Case.List::Ade.Club51.Case.List.Function::FunctionHandler"
 }
+request
+{
+  "pageNum": 1,// Page number for pagination, representing the current page index.
+  "pageSize": 100,// Number of records per page for pagination.
+  "keyword": "19681950",
+  "keywordType": "CONTRACT_NUMBER", //ADVISER_NAME, ADVISER_SURNAME, PRODUCT, CONTRACT_NUMBER, SALES_CODE, USERCODE-will be used to return recently veiwed cases
+  "orgCodeFilter": ["A000054", "S111984"], // Filter criteria for searching based on organization code. Values in "orgCodeFilter": ["A000054", "S111984"] will be converted into a format compatible with OM, like "LQPA". (LQPA = Golde Eagles)
+  "viewFilter": ["1"], // Open Cases = ["1"], Finalised Cases = ["8", "4", "5", "9", "7"],On Hold = ["2"], Exceptions = ["3"], Cancelled Manually = ["5"], All Cases = null
+  "order": "asc",
+  "userCode": "", //advisor identifier
+  "orderByColumn": "CASE_CONTRACTNUMBER" // Supported values: CASE_CONTRACTNUMBER, CASE_STARTDATE, FI_ADVISERNAME, PRODUCT_NAME
+
+}
+response
+{
+  "data": [{
+    "caseId": "7f165597-1243-3718-8a83-f86f3ab82013", // Unique identifier of the case.
+    "source": "Manual", // 1-Manual 2-PP interface
+    "contractNumber": "number1",
+    "productName": "OMP - Recurring",
+    "productCode": "OMP",
+    "initiatedOn": "12 Feb 2025",
+    "customerInitials": "e",
+    "customerLastName": "eric",
+    "companyName": null,
+    "adviserName": "Premium History", // Primary adviser's username.
+    "adviserId": "D768415CE87B4CEC", // Primary adviser's user ID in DAE.
+    "salesCode": "002647",
+    "area": "Vaal Maluti (LX)",
+    "region": "Central Region (L)",
+    "adviserTeamName": "Golden Eagles (LQPA)", // Adviser's team name.
+    "adviserTeamCode": "LQPA", // Adviser's team code.
+    "splitCommission": "Yes", // Commission split: 1 - Yes, 0 - No.
+    "ownerName": "OMDAEsuper", // Case owner's username.
+    "ownerId": "C25079318A2D453A", // Case owner's user ID in DAE.
+    "createdOn": "12 Feb 2025", // Date when the case was created.
+    "modifiedOn": "12 Feb 2025", // Last modified date of the case.
+    "status": "Open", // Case status: 1-Open 2-On Hold 3-Exception 4-Cancelled 5-Cancelled Manually 7-Declined 8-Issued 9-NTU
+  }
+  ],
+  "page": 1,
+  "pageSize": 10,
+  "total": 20,
+  "isValid": true,
+  "statusCode": 200,
+  "messages": [],
+  "errors": []
+}
