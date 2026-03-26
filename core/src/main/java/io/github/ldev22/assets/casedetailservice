@@ -10,12 +10,13 @@ public async Task<ResponseData> UpdateContract(RequestData input)
         await connection.OpenAsync();
 
         // Generate a new ContractDetailId if one does not exist
-        var newId = string.IsNullOrWhiteSpace(input.ContactDetail?.ContractDetailId)
+        var contractDetailId = string.IsNullOrWhiteSpace(input.ContactDetail?.ContractDetailId)
             ? Guid.NewGuid().ToString()
             : input.ContactDetail.ContractDetailId;
 
         using var command = connection.CreateCommand();
 
+        // Snowflake MERGE with positional parameters (?)
         command.CommandText = @"
             MERGE INTO CONTRACT_DETAILS t
             USING (
@@ -70,37 +71,37 @@ public async Task<ResponseData> UpdateContract(RequestData input)
             );
         ";
 
-        // Add parameters in exact order for positional binding
-        AddPositionalParameter(command, input.CaseId);                                      // 1
-        AddPositionalParameter(command, input.ContactDetail?.ContractDetailId);             // 2
+        // Add parameters in exact order
+        AddPositionalParameter(command, input.CaseId);                         // 1
+        AddPositionalParameter(command, input.ContactDetail?.ContractDetailId); // 2
 
-        AddPositionalParameter(command, input.ContactDetail?.ContractNumber);               // 3
-        AddPositionalParameter(command, input.ContactDetail?.ProductName);                  // 4
-        AddPositionalParameter(command, input.ContactDetail?.InvestType);                   // 5
-        AddPositionalParameter(command, input.ContactDetail?.InvestAmount);                 // 6
-        AddPositionalParameter(command, input.ContactDetail?.PayMethod);                     // 7
-        AddPositionalParameter(command, input.ContactDetail?.CommAllowance);                // 8
-        AddPositionalParameter(command, input.ContactDetail?.FpFee);                        // 9
-        AddPositionalParameter(command, input.ContactDetail?.NegCommAllowance);             // 10
-        AddPositionalParameter(command, input.ContactDetail?.NegCommPercentage);            // 11
-        AddPositionalParameter(command, input.ContactDetail?.ModifiedBy);                   // 12
+        AddPositionalParameter(command, input.ContactDetail?.ContractNumber);  // 3
+        AddPositionalParameter(command, input.ContactDetail?.ProductName);     // 4
+        AddPositionalParameter(command, input.ContactDetail?.InvestType);      // 5
+        AddPositionalParameter(command, input.ContactDetail?.InvestAmount);    // 6
+        AddPositionalParameter(command, input.ContactDetail?.PayMethod);       // 7
+        AddPositionalParameter(command, input.ContactDetail?.CommAllowance);   // 8
+        AddPositionalParameter(command, input.ContactDetail?.FpFee);           // 9
+        AddPositionalParameter(command, input.ContactDetail?.NegCommAllowance);// 10
+        AddPositionalParameter(command, input.ContactDetail?.NegCommPercentage);// 11
+        AddPositionalParameter(command, input.ContactDetail?.ModifiedBy);      // 12
 
-        AddPositionalParameter(command, newId);                                             // 13
-        AddPositionalParameter(command, input.CaseId);                                      // 14
-        AddPositionalParameter(command, input.ContactDetail?.ContractNumber);               // 15
-        AddPositionalParameter(command, input.ContactDetail?.ProductName);                  // 16
-        AddPositionalParameter(command, input.ContactDetail?.InvestType);                   // 17
-        AddPositionalParameter(command, input.ContactDetail?.InvestAmount);                 // 18
-        AddPositionalParameter(command, input.ContactDetail?.PayMethod);                     // 19
-        AddPositionalParameter(command, input.ContactDetail?.CommAllowance);                // 20
-        AddPositionalParameter(command, input.ContactDetail?.FpFee);                        // 21
-        AddPositionalParameter(command, input.ContactDetail?.NegCommAllowance);             // 22
-        AddPositionalParameter(command, input.ContactDetail?.NegCommPercentage);            // 23
-        AddPositionalParameter(command, input.ContactDetail?.CreatedBy);                    // 24
+        AddPositionalParameter(command, contractDetailId);                     // 13
+        AddPositionalParameter(command, input.CaseId);                         // 14
+        AddPositionalParameter(command, input.ContactDetail?.ContractNumber);  // 15
+        AddPositionalParameter(command, input.ContactDetail?.ProductName);     // 16
+        AddPositionalParameter(command, input.ContactDetail?.InvestType);      // 17
+        AddPositionalParameter(command, input.ContactDetail?.InvestAmount);    // 18
+        AddPositionalParameter(command, input.ContactDetail?.PayMethod);       // 19
+        AddPositionalParameter(command, input.ContactDetail?.CommAllowance);   // 20
+        AddPositionalParameter(command, input.ContactDetail?.FpFee);           // 21
+        AddPositionalParameter(command, input.ContactDetail?.NegCommAllowance);// 22
+        AddPositionalParameter(command, input.ContactDetail?.NegCommPercentage);// 23
+        AddPositionalParameter(command, input.ContactDetail?.CreatedBy);       // 24
 
         await command.ExecuteNonQueryAsync();
 
-        response.Data.NewContractDetailId = newId;
+        response.Data.NewContractDetailId = contractDetailId;
     }
     catch (Exception ex)
     {
@@ -113,10 +114,11 @@ public async Task<ResponseData> UpdateContract(RequestData input)
     return response;
 }
 
-// Helper for positional parameters
+// Helper method for positional parameters
 private void AddPositionalParameter(IDbCommand command, object value)
 {
     var param = command.CreateParameter();
     param.Value = value ?? DBNull.Value;
+    // Do NOT set ParameterName for positional binding
     command.Parameters.Add(param);
 }
