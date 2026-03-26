@@ -1,104 +1,136 @@
-public async Task<ResponseData> UpdateContract(RequestData input)
+using System;
+using System.Data;
+using System.Threading.Tasks;
+using Amazon.Lambda.Core;
+using Newtonsoft.Json;
+
+namespace Ade.Club51.Case.Details.Services
 {
-    LambdaLogger.Log($"INFO: UpdateContract called with input: {JsonConvert.SerializeObject(input)}");
-
-    var response = new ResponseData();
-
-    try
+    public class CaseDetailsService : ICaseDetailsService
     {
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.OpenAsync();
+        private readonly ISnowflakeConnectionFactory _connectionFactory;
+        private readonly DatabaseConfig _dbConfig;
 
-        var newId = Guid.NewGuid().ToString();
+        public CaseDetailsService(ISnowflakeConnectionFactory connectionFactory, DatabaseConfig dbConfig)
+        {
+            _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+            _dbConfig = dbConfig ?? throw new ArgumentNullException(nameof(dbConfig));
 
-        var command = connection.CreateCommand();
+            LambdaLogger.Log("INFO: CaseDetailsService initialized successfully.");
+        }
 
-        command.CommandText = @"
-            MERGE INTO CONTRACT_DETAILS t
-            USING (
-                SELECT 
-                    @CaseId AS CASE_ID,
-                    @ContractDetailId AS CONTRACT_DETAIL_ID
-            ) s
-            ON t.CONTRACT_DETAIL_ID = s.CONTRACT_DETAIL_ID
+        public async Task<ResponseData> UpdateContract(RequestData input)
+        {
+            LambdaLogger.Log($"INFO: UpdateContract called with input: {JsonConvert.SerializeObject(input)}");
 
-            WHEN MATCHED THEN UPDATE SET
-                CONTRACT_NUMBER = @ContractNumber,
-                PRODUCT_NAME = @ProductName,
-                INVEST_TYPE = @InvestType,
-                INVEST_AMOUNT = @InvestAmount,
-                PAY_METHOD = @PayMethod,
-                COMM_ALLOWANCE = @CommAllowance,
-                FP_FEE = @FpFee,
-                NEG_COMM_ALLOWANCE = @NegCommAllowance,
-                NEG_COMM_PERCENTAGE = @NegCommPercentage,
-                MODIFIED_BY = @ModifiedBy,
-                MODIFIED_ON = CURRENT_TIMESTAMP()
+            var response = new ResponseData();
 
-            WHEN NOT MATCHED THEN INSERT (
-                CONTRACT_DETAIL_ID,
-                CASE_ID,
-                CONTRACT_NUMBER,
-                PRODUCT_NAME,
-                INVEST_TYPE,
-                INVEST_AMOUNT,
-                PAY_METHOD,
-                COMM_ALLOWANCE,
-                FP_FEE,
-                NEG_COMM_ALLOWANCE,
-                NEG_COMM_PERCENTAGE,
-                CREATED_BY,
-                CREATED_ON
-            )
-            VALUES (
-                @NewId,
-                @CaseId,
-                @ContractNumber,
-                @ProductName,
-                @InvestType,
-                @InvestAmount,
-                @PayMethod,
-                @CommAllowance,
-                @FpFee,
-                @NegCommAllowance,
-                @NegCommPercentage,
-                @CreatedBy,
-                CURRENT_TIMESTAMP()
-            );
-        ";
+            try
+            {
+                using var connection = _connectionFactory.CreateConnection();
+                await connection.OpenAsync();
 
-        // Parameters
-        AddParameter(command, "CaseId", input.CaseId);
-        AddParameter(command, "ContractDetailId", input.ContactDetail.ContractDetailId);
-        AddParameter(command, "NewId", newId);
-        AddParameter(command, "ContractNumber", input.ContactDetail.ContractNumber);
-        AddParameter(command, "ProductName", input.ContactDetail.ProductName);
-        AddParameter(command, "InvestType", input.ContactDetail.InvestType);
-        AddParameter(command, "InvestAmount", input.ContactDetail.InvestAmount);
-        AddParameter(command, "PayMethod", input.ContactDetail.PayMethod);
-        AddParameter(command, "CommAllowance", input.ContactDetail.CommAllowance);
-        AddParameter(command, "FpFee", input.ContactDetail.FpFee);
-        AddParameter(command, "NegCommAllowance", input.ContactDetail.NegCommAllowance);
-        AddParameter(command, "NegCommPercentage", input.ContactDetail.NegCommPercentage);
-        AddParameter(command, "CreatedBy", input.ContactDetail.CreatedBy);
-        AddParameter(command, "ModifiedBy", input.ContactDetail.ModifiedBy);
+                var newId = Guid.NewGuid().ToString();
 
-        await command.ExecuteNonQueryAsync();
+                using var command = connection.CreateCommand();
 
-        // ✅ Return response
-        response.Data.NewContractDetailId = string.IsNullOrEmpty(input.ContactDetail.ContractDetailId)
-            ? newId
-            : input.ContactDetail.ContractDetailId;
+                command.CommandText = @"
+                    MERGE INTO CONTRACT_DETAILS t
+                    USING (
+                        SELECT 
+                            @CaseId AS CASE_ID,
+                            @ContractDetailId AS CONTRACT_DETAIL_ID
+                    ) s
+                    ON t.CONTRACT_DETAIL_ID = s.CONTRACT_DETAIL_ID
+
+                    WHEN MATCHED THEN UPDATE SET
+                        CONTRACT_NUMBER = @ContractNumber,
+                        PRODUCT_NAME = @ProductName,
+                        INVEST_TYPE = @InvestType,
+                        INVEST_AMOUNT = @InvestAmount,
+                        PAY_METHOD = @PayMethod,
+                        COMM_ALLOWANCE = @CommAllowance,
+                        FP_FEE = @FpFee,
+                        NEG_COMM_ALLOWANCE = @NegCommAllowance,
+                        NEG_COMM_PERCENTAGE = @NegCommPercentage,
+                        MODIFIED_BY = @ModifiedBy,
+                        MODIFIED_ON = CURRENT_TIMESTAMP()
+
+                    WHEN NOT MATCHED THEN INSERT (
+                        CONTRACT_DETAIL_ID,
+                        CASE_ID,
+                        CONTRACT_NUMBER,
+                        PRODUCT_NAME,
+                        INVEST_TYPE,
+                        INVEST_AMOUNT,
+                        PAY_METHOD,
+                        COMM_ALLOWANCE,
+                        FP_FEE,
+                        NEG_COMM_ALLOWANCE,
+                        NEG_COMM_PERCENTAGE,
+                        CREATED_BY,
+                        CREATED_ON
+                    )
+                    VALUES (
+                        @NewId,
+                        @CaseId,
+                        @ContractNumber,
+                        @ProductName,
+                        @InvestType,
+                        @InvestAmount,
+                        @PayMethod,
+                        @CommAllowance,
+                        @FpFee,
+                        @NegCommAllowance,
+                        @NegCommPercentage,
+                        @CreatedBy,
+                        CURRENT_TIMESTAMP()
+                    );
+                ";
+
+                // Parameters
+                AddParameter(command, "CaseId", input.CaseId);
+                AddParameter(command, "ContractDetailId", input.ContactDetail?.ContractDetailId);
+                AddParameter(command, "NewId", newId);
+                AddParameter(command, "ContractNumber", input.ContactDetail?.ContractNumber);
+                AddParameter(command, "ProductName", input.ContactDetail?.ProductName);
+                AddParameter(command, "InvestType", input.ContactDetail?.InvestType);
+                AddParameter(command, "InvestAmount", input.ContactDetail?.InvestAmount);
+                AddParameter(command, "PayMethod", input.ContactDetail?.PayMethod);
+                AddParameter(command, "CommAllowance", input.ContactDetail?.CommAllowance);
+                AddParameter(command, "FpFee", input.ContactDetail?.FpFee);
+                AddParameter(command, "NegCommAllowance", input.ContactDetail?.NegCommAllowance);
+                AddParameter(command, "NegCommPercentage", input.ContactDetail?.NegCommPercentage);
+                AddParameter(command, "CreatedBy", input.ContactDetail?.CreatedBy);
+                AddParameter(command, "ModifiedBy", input.ContactDetail?.ModifiedBy);
+
+                await command.ExecuteNonQueryAsync();
+
+                // ✅ Determine returned ID
+                response.Data.NewContractDetailId =
+                    string.IsNullOrWhiteSpace(input.ContactDetail?.ContractDetailId)
+                        ? newId
+                        : input.ContactDetail.ContractDetailId;
+            }
+            catch (Exception ex)
+            {
+                ex = ex.InnerException ?? ex;
+                LambdaLogger.Log($"ERROR: {ex.Message} | StackTrace: {ex.StackTrace}");
+
+                throw; // Let Lambda handle failure (or wrap if you prefer)
+            }
+
+            LambdaLogger.Log($"INFO: UpdateContract completed. Response: {JsonConvert.SerializeObject(response)}");
+
+            return response;
+        }
+
+        private void AddParameter(IDbCommand command, string name, object value)
+        {
+            var param = command.CreateParameter();
+            param.ParameterName = name;
+            param.Value = value ?? DBNull.Value;
+            command.Parameters.Add(param);
+        }
     }
-    catch (Exception ex)
-    {
-        ex = ex.InnerException ?? ex;
-        LambdaLogger.Log($"ERROR: {ex.Message}");
-
-        throw; // let Lambda handle or wrap if needed
-    }
-
-    LambdaLogger.Log($"INFO: UpdateContract completed. Response: {JsonConvert.SerializeObject(response)}");
-
-    return response;
 }
