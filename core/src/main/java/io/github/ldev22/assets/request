@@ -1,0 +1,19 @@
+{
+    "caseId": "5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc",
+    "contactDetail": {
+        "contractDetailId": "ecbe2bc9-5c6d-469d-be07-02893dca4938",
+        "contractNumber": "19604880",
+        "productName": "Orion - SP",
+        "investType": "Single Premium",
+        "investAmount": "23.00",
+        "payMethod": "Debit Order",
+        "commAllowance": "100.00",
+        "fpFee": "222.00",
+        "negCommAllowance": "100.00",
+        "negCommPercentage": "100.00",
+        "createdBy": "OneConnectBA",
+        "createdOn": "2026-03-23T03:33:35.601",
+        "modifiedBy": "OneConnectBA",
+        "modifiedOn": "2026-03-23T11:26:00.210"
+    }
+}
