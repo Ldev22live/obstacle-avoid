@@ -1,22 +1,16 @@
-using System;
-using System.Data;
-using System.Threading.Tasks;
-using Amazon.Lambda.Core;
-using Newtonsoft.Json;
-
-namespace Ade.Club51.Case.Details.Services
+namespace Ade.Club51.Lambda.Contract.Update.Services
 {
-    public class CaseDetailsService : ICaseDetailsService
+    public class ContractUpdateService : IContractUpdateService
     {
         private readonly ISnowflakeConnectionFactory _connectionFactory;
         private readonly DatabaseConfig _dbConfig;
 
-        public CaseDetailsService(ISnowflakeConnectionFactory connectionFactory, DatabaseConfig dbConfig)
+        public ContractUpdateService(ISnowflakeConnectionFactory connectionFactory, DatabaseConfig dbConfig)
         {
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
             _dbConfig = dbConfig ?? throw new ArgumentNullException(nameof(dbConfig));
 
-            LambdaLogger.Log("INFO: CaseDetailsService initialized successfully.");
+            LambdaLogger.Log("INFO: ContractUpdateService initialized successfully.");
         }
 
         public async Task<ResponseData> UpdateContract(RequestData input)
@@ -37,7 +31,7 @@ namespace Ade.Club51.Case.Details.Services
                 command.CommandText = @"
                     MERGE INTO CONTRACT_DETAILS t
                     USING (
-                        SELECT 
+                        SELECT
                             @CaseId AS CASE_ID,
                             @ContractDetailId AS CONTRACT_DETAIL_ID
                     ) s
@@ -106,7 +100,6 @@ namespace Ade.Club51.Case.Details.Services
 
                 await command.ExecuteNonQueryAsync();
 
-                // ✅ Determine returned ID
                 response.Data.NewContractDetailId =
                     string.IsNullOrWhiteSpace(input.ContactDetail?.ContractDetailId)
                         ? newId
@@ -117,7 +110,7 @@ namespace Ade.Club51.Case.Details.Services
                 ex = ex.InnerException ?? ex;
                 LambdaLogger.Log($"ERROR: {ex.Message} | StackTrace: {ex.StackTrace}");
 
-                throw; // Let Lambda handle failure (or wrap if you prefer)
+                throw;
             }
 
             LambdaLogger.Log($"INFO: UpdateContract completed. Response: {JsonConvert.SerializeObject(response)}");
