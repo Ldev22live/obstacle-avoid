@@ -33,19 +33,19 @@ public class ContractUpdateService : IContractUpdateService
         MERGE INTO FIFTYONECLUB_CONTRACTDETAIL t
         USING (
             SELECT
-                ? AS CONTRACT_DETAIL_ID,
-                ? AS CASE_ID,
-                ? AS CONTRACT_NUMBER,
-                ? AS PRODUCT_NAME,
-                ? AS INVEST_TYPE,
-                ? AS INVEST_AMOUNT,
-                ? AS PAY_METHOD,
-                ? AS COMM_ALLOWANCE,
-                ? AS FP_FEE,
-                ? AS NEG_COMM_ALLOWANCE,
-                ? AS NEG_COMM_PERCENTAGE,
-                ? AS CREATED_BY,
-                ? AS MODIFIED_BY
+                :p1 AS CONTRACT_DETAIL_ID,
+                :p2 AS CASE_ID,
+                :p3 AS CONTRACT_NUMBER,
+                :p4 AS PRODUCT_NAME,
+                :p5 AS INVEST_TYPE,
+                :p6 AS INVEST_AMOUNT,
+                :p7 AS PAY_METHOD,
+                :p8 AS COMM_ALLOWANCE,
+                :p9 AS FP_FEE,
+                :p10 AS NEG_COMM_ALLOWANCE,
+                :p11 AS NEG_COMM_PERCENTAGE,
+                :p12 AS CREATED_BY,
+                :p13 AS MODIFIED_BY
         ) s
         ON t.CONTRACT_DETAIL_ID = s.CONTRACT_DETAIL_ID
 
