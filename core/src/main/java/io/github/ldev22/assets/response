@@ -3,3 +3,21 @@
         "newContractDetailId": "xxxx"
     }
 }
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+
+namespace Ade.Club51.Case.Details.Models
+{
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public class ResponseData
+    {
+        public Data Data { get; set; } = new Data();
+    }
+
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public class Data
+    {
+        public string NewContractDetailId { get; set; } = string.Empty;
+    }
+}
