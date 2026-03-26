@@ -1,0 +1,135 @@
+public class ContractUpdateService : IContractUpdateService
+{
+    private readonly ISnowflakeConnectionFactory _connectionFactory;
+    private readonly DatabaseConfig _dbConfig;
+
+    public ContractUpdateService(ISnowflakeConnectionFactory connectionFactory, DatabaseConfig dbConfig)
+    {
+        _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+        _dbConfig = dbConfig ?? throw new ArgumentNullException(nameof(dbConfig));
+
+        LambdaLogger.Log("INFO: ContractUpdateService initialized successfully.");
+    }
+
+    public async Task<ResponseData> UpdateContract(RequestData input)
+    {
+        LambdaLogger.Log($"INFO: UpdateContract called with input: {JsonConvert.SerializeObject(input)}");
+
+        var response = new ResponseData();
+
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            await connection.OpenAsync();
+
+            // Generate a new ContractDetailId if one does not exist
+            var contractDetailId = string.IsNullOrWhiteSpace(input.ContactDetail?.ContractDetailId)
+                ? Guid.NewGuid().ToString()
+                : input.ContactDetail.ContractDetailId;
+
+            using var command = connection.CreateCommand();
+
+            command.CommandText = @"
+        MERGE INTO CONTRACT_DETAILS t
+        USING (
+            SELECT
+                ? AS CONTRACT_DETAIL_ID,
+                ? AS CASE_ID,
+                ? AS CONTRACT_NUMBER,
+                ? AS PRODUCT_NAME,
+                ? AS INVEST_TYPE,
+                ? AS INVEST_AMOUNT,
+                ? AS PAY_METHOD,
+                ? AS COMM_ALLOWANCE,
+                ? AS FP_FEE,
+                ? AS NEG_COMM_ALLOWANCE,
+                ? AS NEG_COMM_PERCENTAGE,
+                ? AS CREATED_BY,
+                ? AS MODIFIED_BY
+        ) s
+        ON t.CONTRACT_DETAIL_ID = s.CONTRACT_DETAIL_ID
+
+        WHEN MATCHED THEN UPDATE SET
+            CASE_ID = s.CASE_ID,
+            CONTRACT_NUMBER = s.CONTRACT_NUMBER,
+            PRODUCT_NAME = s.PRODUCT_NAME,
+            INVEST_TYPE = s.INVEST_TYPE,
+            INVEST_AMOUNT = s.INVEST_AMOUNT,
+            PAY_METHOD = s.PAY_METHOD,
+            COMM_ALLOWANCE = s.COMM_ALLOWANCE,
+            FP_FEE = s.FP_FEE,
+            NEG_COMM_ALLOWANCE = s.NEG_COMM_ALLOWANCE,
+            NEG_COMM_PERCENTAGE = s.NEG_COMM_PERCENTAGE,
+            MODIFIED_BY = s.MODIFIED_BY,
+            MODIFIED_ON = CURRENT_TIMESTAMP()
+
+        WHEN NOT MATCHED THEN INSERT (
+            CONTRACT_DETAIL_ID,
+            CASE_ID,
+            CONTRACT_NUMBER,
+            PRODUCT_NAME,
+            INVEST_TYPE,
+            INVEST_AMOUNT,
+            PAY_METHOD,
+            COMM_ALLOWANCE,
+            FP_FEE,
+            NEG_COMM_ALLOWANCE,
+            NEG_COMM_PERCENTAGE,
+            CREATED_BY,
+            CREATED_ON
+        )
+        VALUES (
+            s.CONTRACT_DETAIL_ID,
+            s.CASE_ID,
+            s.CONTRACT_NUMBER,
+            s.PRODUCT_NAME,
+            s.INVEST_TYPE,
+            s.INVEST_AMOUNT,
+            s.PAY_METHOD,
+            s.COMM_ALLOWANCE,
+            s.FP_FEE,
+            s.NEG_COMM_ALLOWANCE,
+            s.NEG_COMM_PERCENTAGE,
+            s.CREATED_BY,
+            CURRENT_TIMESTAMP()
+        );
+    ";
+
+            AddPositionalParameter(command, contractDetailId);
+            AddPositionalParameter(command, input.CaseId);
+            AddPositionalParameter(command, input.ContactDetail?.ContractNumber);
+            AddPositionalParameter(command, input.ContactDetail?.ProductName);
+            AddPositionalParameter(command, input.ContactDetail?.InvestType);
+            AddPositionalParameter(command, input.ContactDetail?.InvestAmount);
+            AddPositionalParameter(command, input.ContactDetail?.PayMethod);
+            AddPositionalParameter(command, input.ContactDetail?.CommAllowance);
+            AddPositionalParameter(command, input.ContactDetail?.FpFee);
+            AddPositionalParameter(command, input.ContactDetail?.NegCommAllowance);
+            AddPositionalParameter(command, input.ContactDetail?.NegCommPercentage);
+            AddPositionalParameter(command, input.ContactDetail?.CreatedBy);
+            AddPositionalParameter(command, input.ContactDetail?.ModifiedBy);
+
+            await command.ExecuteNonQueryAsync();
+
+            response.Data.NewContractDetailId = contractDetailId;
+        }
+        catch (Exception ex)
+        {
+            ex = ex.InnerException ?? ex;
+            LambdaLogger.Log($"ERROR: {ex.Message} | StackTrace: {ex.StackTrace}");
+            throw;
+        }
+
+        LambdaLogger.Log($"INFO: UpdateContract completed. Response: {JsonConvert.SerializeObject(response)}");
+        return response;
+    }
+
+    // Helper method for positional parameters
+    private void AddPositionalParameter(IDbCommand command, object value)
+    {
+        var param = command.CreateParameter();
+        param.ParameterName = $"p{command.Parameters.Count + 1}";
+        param.Value = value ?? DBNull.Value;
+        command.Parameters.Add(param);
+    }
+}
