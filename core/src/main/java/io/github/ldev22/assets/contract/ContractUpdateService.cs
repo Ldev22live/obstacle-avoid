@@ -28,6 +28,17 @@ public class ContractUpdateService : IContractUpdateService
                 ? Guid.NewGuid().ToString()
                 : input.ContactDetail.ContractDetailId;
 
+            var spResultId = await TryUpdateViaStoredProcedure(connection, input);
+            if (!string.IsNullOrWhiteSpace(spResultId))
+            {
+                response.Data.newContractDetailId = spResultId;
+                response.IsValid = true;
+                response.StatusCode = 200;
+
+                LambdaLogger.Log($"INFO: UpdateContract completed via stored procedure. newContractDetailId: {spResultId}");
+                return response;
+            }
+
             var productId = await ResolveProductId(connection, input.ContactDetail?.ProductName);
             var payMethodId = await ResolvePayMethodId(connection, input.ContactDetail?.PayMethod);
 
@@ -144,6 +155,58 @@ public class ContractUpdateService : IContractUpdateService
 
         LambdaLogger.Log($"INFO: UpdateContract completed. Response: {JsonConvert.SerializeObject(response)}");
         return response;
+    }
+
+    private async Task<string?> TryUpdateViaStoredProcedure(IDbConnection connection, RequestData input)
+    {
+        var procName = Environment.GetEnvironmentVariable("CONTRACTDETAIL_PROC") ?? "CREATEUPDATE_CONTRACTDETAIL";
+        var db = _dbConfig.Database;
+        var schema = _dbConfig.Schema;
+
+        try
+        {
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(input, options);
+            var escaped = "'" + json.Replace("'", "''") + "'";
+
+            using var command = connection.CreateCommand();
+            command.CommandText = $"CALL {db}.{schema}.{procName}({escaped})";
+            command.CommandType = CommandType.Text;
+
+            LambdaLogger.Log($"INFO: Executing stored procedure: {db}.{schema}.{procName}");
+
+            if (command is not System.Data.Common.DbCommand dbCommand)
+            {
+                throw new InvalidOperationException($"Command type '{command.GetType().FullName}' does not support async reader operations.");
+            }
+
+            using var reader = await dbCommand.ExecuteReaderAsync();
+
+            string? result = null;
+            while (await reader.ReadAsync())
+            {
+                result = reader[0]?.ToString();
+            }
+
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                LambdaLogger.Log("WARN: Stored procedure returned no value; falling back to MERGE.");
+                return null;
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            ex = ex.InnerException ?? ex;
+            LambdaLogger.Log($"WARN: Stored procedure path failed ({db}.{schema}.{procName}). Falling back to MERGE. Error: {ex.Message}");
+            return null;
+        }
     }
 
     public async Task<IReadOnlyList<string>> DebugListAccessibleTables(int maxTables = 200)
