@@ -64,6 +64,20 @@ public class ContractUpdateService : IContractUpdateService
             response.Data.newContractDetailId = newId;
             response.IsValid = true;
             response.StatusCode = 200;
+            //after SP execute similar query
+            var caseId = request.Submission.CaseNumber;
+            var salesCode = request.Submission.SalesCode;
+            var productId = request.Submission.New51ClubsubmissionId;
+
+            LambdaLogger.Log($"INFO: Parameters for verification query — CaseId: {caseId}, SalesCode: {salesCode}, ProductId: {productId}");
+
+            var queryBuilder = new StringBuilder();
+            queryBuilder.AppendLine($"SELECT SUBMISSIONS_ID FROM {db}.CLUB51.FIFTYONECLUB_SUBMISSIONS");
+            queryBuilder.AppendLine("WHERE SUBMISSIONS_ENDDATE = '9999-12-31'");
+            queryBuilder.AppendLine("AND SUBMISSIONS_ISREVERSAL = 0");
+            queryBuilder.AppendLine($"AND SUBMISSIONS_CASE_ID = '{caseId?.Replace("'", "''")}'");
+            queryBuilder.AppendLine("AND SUBMISSIONS_ISLATEST = 1");
+            queryBuilder.AppendLine($"AND SUBMISSIONS_SALESCODE = '{salesCode?.Replace("'", "''")}'");
 
             LambdaLogger.Log($"INFO: UpdateContract completed via stored procedure. Response: {JsonConvert.SerializeObject(response)}");
             return response;
