@@ -1,0 +1,71 @@
+public static string GetCaseDetailQuery(string db, string schema, string table) => $@"
+    SELECT
+        C.CASE_INITIATEDONDATE AS InitiatedOn,
+        TO_VARCHAR(C.CASE_LASTUPDATED, 'YYYY-MM-DD') AS LastUpdated,
+        C.CASE_ASSIGNEDTO AS AssignedTo,
+        C.CASE_ID AS CaseId,
+        C.CASE_CONTRACTNUMBER AS ContractNumber,
+        C.CASE_SOURCE AS Source,
+        C.CASE_CUSTOMERTYPE AS ClientType,
+        C.CASE_CUSTOMERTINITIALS AS ClientInitials,
+        C.CASE_CUSTOMERLASTNAME AS ClientLastName,
+        TO_VARCHAR(C.CASE_CUSTOMERDATEOFBIRTH, 'YYYY-MM-DD') AS ClientDob,
+        C.CASE_COMPANYNAME AS CompanyName,
+        C.CASE_LOCATION AS Location,
+        C.CASE_PRODUCT_ID AS ProductCode,
+        P.PRODUCT_NAME AS ProductName,
+        CASE WHEN C.CASE_ISSPLITCOMMISSION = 1 THEN 'Yes' ELSE 'No' END AS SplitCommission,
+        FI.AdviserCode,
+        FI.AdviserName,
+        FI.FirstName,
+        FI.LastName,
+        FI.AdviserStatus,
+        FI.SalesCode,
+        C.CASE_TEAMOWNER_CODE AS teamOwnerCode,
+        C.CASE_TEAMOWNER AS teamOwner,
+        CASE WHEN C.CASE_MANUALLYMAINTAINED = 1 THEN 'Yes' ELSE 'No' END AS ManuallyUpdated,
+        S.STATUS_DESC AS CaseStatus,
+        C.CASE_CREATEDBY AS CreatedBy,
+        C.CASE_CREATEDON AS CreatedOn,
+        C.CASE_LASTMODIFIEDBY AS LastModifiedBy,
+        C.CASE_LASTMODIFIED AS LastModifiedDate,
+        C.CASE_LASTRUNDATE AS LastRunDate,
+        FI.Area,
+        FI.Region,
+        CASE
+            WHEN FI.TeamName IS NOT NULL
+                 AND CHARINDEX('(', FI.TeamName) > 0
+                 AND CHARINDEX(')', FI.TeamName) > CHARINDEX('(', FI.TeamName)
+            THEN SUBSTRING(FI.TeamName,
+                           CHARINDEX('(', FI.TeamName) + 1,
+                           CHARINDEX(')', FI.TeamName) - CHARINDEX('(', FI.TeamName) - 1)
+            ELSE NULL
+        END AS OmTeamCode,
+        FI.TeamName AS TeamName
+    FROM {db}.{schema}.{table} C
+    LEFT JOIN {db}.CLUB51.PRODUCT P
+        ON C.CASE_PRODUCT_ID = P.PRODUCT_ID
+    LEFT JOIN {db}.CLUB51.FIFTYONECLUB_STATUS S
+        ON C.CASE_STATUS_ID = S.STATUS_ID
+    LEFT JOIN (
+        SELECT /*+ MATERIALIZED */
+            FI_CASE_ID,
+            FI_SALESCODE AS AdviserCode,
+            FI_ADVISERNAME AS AdviserName,
+            FI_FIRSTNAME AS FirstName,
+            FI_LASTNAME AS LastName,
+            FI_ADVISERSTATUS AS AdviserStatus,
+            FI_SALESCODE AS SalesCode,
+            FI_AREA AS Area,
+            FI_REGION AS Region,
+            FI_TEAM AS TeamName
+        FROM (
+            SELECT *
+            FROM {db}.CLUB51.FIFTYONECLUB_FINANCIALINFORMATION
+            WHERE FI_ISPRIMARY = '1' AND FI_ISDELETED = 0 AND FI_ENDDATE = '9999-12-31'
+            /*QUALIFY ROW_NUMBER() OVER (PARTITION BY FI_CASE_ID ORDER BY FI_ID) = 1*/
+        ) Sub
+    ) FI
+        ON C.CASE_ID = FI.FI_CASE_ID
+    WHERE C.CASE_ID = :CaseId
+      AND (C.CASE_ENDDATE IS NULL OR C.CASE_ENDDATE = '9999-12-31') ";
