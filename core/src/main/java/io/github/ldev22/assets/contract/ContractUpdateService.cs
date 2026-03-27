@@ -1,3 +1,4 @@
+
 public class ContractUpdateService : IContractUpdateService
 {
     private readonly ISnowflakeConnectionFactory _connectionFactory;
@@ -33,74 +34,74 @@ public class ContractUpdateService : IContractUpdateService
             using var command = connection.CreateCommand();
 
             command.CommandText = @"
-        MERGE INTO FIFTYONECLUB_CONTRACTDETAIL t
-        USING (
-            SELECT
-                :p1 AS CD_ID,
-                :p2 AS CD_CASE_ID,
-                :p3 AS CD_CONTRACTNUMBER,
-                :p4 AS CD_PRODUCT_ID,
-                :p5 AS CD_INVESTTYPE,
-                :p6 AS CD_INVESTAMOUNT,
-                :p7 AS CD_PM_ID,
-                :p8 AS CD_COMMALLOWANCE,
-                :p9 AS CD_FPFEE,
-                :p10 AS CD_NEGCOMMALLOWANCE,
-                :p11 AS CD_NEGCOMMPERCENTAGE,
-                :p12 AS CD_CREATEDBY,
-                :p13 AS CD_MODIFIEDBY
-        ) s
-        ON t.CD_ID = s.CD_ID
+    MERGE INTO FIFTYONECLUB_CONTRACTDETAIL t
+    USING (
+        SELECT
+            :p1 AS CD_ID,
+            :p2 AS CD_CASE_ID,
+            :p3 AS CD_CONTRACTNUMBER,
+            :p4 AS CD_PRODUCT_ID,
+            :p5 AS CD_INVESTTYPE,
+            :p6 AS CD_INVESTAMOUNT,
+            :p7 AS CD_PM_ID,
+            :p8 AS CD_COMMALLOWANCE,
+            :p9 AS CD_FPFEE,
+            :p10 AS CD_NEGCOMMALLOWANCE,
+            :p11 AS CD_NEGCOMMPERCENTAGE,
+            :p12 AS CD_CREATEDBY,
+            :p13 AS CD_MODIFIEDBY
+    ) s
+    ON t.CD_ID = s.CD_ID
 
-        WHEN MATCHED THEN UPDATE SET
-            CD_CASE_ID = s.CD_CASE_ID,
-            CD_CONTRACTNUMBER = s.CD_CONTRACTNUMBER,
-            CD_PRODUCT_ID = s.CD_PRODUCT_ID,
-            CD_INVESTTYPE = s.CD_INVESTTYPE,
-            CD_INVESTAMOUNT = s.CD_INVESTAMOUNT,
-            CD_PM_ID = s.CD_PM_ID,
-            CD_COMMALLOWANCE = s.CD_COMMALLOWANCE,
-            CD_FPFEE = s.CD_FPFEE,
-            CD_NEGCOMMALLOWANCE = s.CD_NEGCOMMALLOWANCE,
-            CD_NEGCOMMPERCENTAGE = s.CD_NEGCOMMPERCENTAGE,
-            CD_MODIFIEDBY = s.CD_MODIFIEDBY,
-            CD_MODIFIED = CURRENT_TIMESTAMP()
+    WHEN MATCHED THEN UPDATE SET
+        CD_CASE_ID = s.CD_CASE_ID,
+        CD_CONTRACTNUMBER = s.CD_CONTRACTNUMBER,
+        CD_PRODUCT_ID = s.CD_PRODUCT_ID,
+        CD_INVESTTYPE = s.CD_INVESTTYPE,
+        CD_INVESTAMOUNT = s.CD_INVESTAMOUNT,
+        CD_PM_ID = s.CD_PM_ID,
+        CD_COMMALLOWANCE = s.CD_COMMALLOWANCE,
+        CD_FPFEE = s.CD_FPFEE,
+        CD_NEGCOMMALLOWANCE = s.CD_NEGCOMMALLOWANCE,
+        CD_NEGCOMMPERCENTAGE = s.CD_NEGCOMMPERCENTAGE,
+        CD_MODIFIEDBY = s.CD_MODIFIEDBY,
+        CD_MODIFIED = CURRENT_TIMESTAMP()
 
-        WHEN NOT MATCHED THEN INSERT (
-            CD_ID,
-            CD_CASE_ID,
-            CD_CONTRACTNUMBER,
-            CD_PRODUCT_ID,
-            CD_INVESTTYPE,
-            CD_INVESTAMOUNT,
-            CD_PM_ID,
-            CD_COMMALLOWANCE,
-            CD_FPFEE,
-            CD_NEGCOMMALLOWANCE,
-            CD_NEGCOMMPERCENTAGE,
-            CD_CREATEDBY,
-            CD_CREATEDON,
-            CD_MODIFIEDBY,
-            CD_MODIFIED
-        )
-        VALUES (
-            s.CD_ID,
-            s.CD_CASE_ID,
-            s.CD_CONTRACTNUMBER,
-            s.CD_PRODUCT_ID,
-            s.CD_INVESTTYPE,
-            s.CD_INVESTAMOUNT,
-            s.CD_PM_ID,
-            s.CD_COMMALLOWANCE,
-            s.CD_FPFEE,
-            s.CD_NEGCOMMALLOWANCE,
-            s.CD_NEGCOMMPERCENTAGE,
-            s.CD_CREATEDBY,
-            CURRENT_TIMESTAMP(),
-            s.CD_MODIFIEDBY,
-            CURRENT_TIMESTAMP()
-        );
-    ";
+    WHEN NOT MATCHED THEN INSERT (
+        CD_ID,
+        CD_CASE_ID,
+        CD_CONTRACTNUMBER,
+        CD_PRODUCT_ID,
+        CD_INVESTTYPE,
+        CD_INVESTAMOUNT,
+        CD_PM_ID,
+        CD_COMMALLOWANCE,
+        CD_FPFEE,
+        CD_NEGCOMMALLOWANCE,
+        CD_NEGCOMMPERCENTAGE,
+        CD_CREATEDBY,
+        CD_CREATEDON,
+        CD_MODIFIEDBY,
+        CD_MODIFIED
+    )
+    VALUES (
+        s.CD_ID,
+        s.CD_CASE_ID,
+        s.CD_CONTRACTNUMBER,
+        s.CD_PRODUCT_ID,
+        s.CD_INVESTTYPE,
+        s.CD_INVESTAMOUNT,
+        s.CD_PM_ID,
+        s.CD_COMMALLOWANCE,
+        s.CD_FPFEE,
+        s.CD_NEGCOMMALLOWANCE,
+        s.CD_NEGCOMMPERCENTAGE,
+        s.CD_CREATEDBY,
+        CURRENT_TIMESTAMP(),
+        s.CD_MODIFIEDBY,
+        CURRENT_TIMESTAMP()
+    );
+";
 
             AddPositionalParameter(command, contractDetailId);
             AddPositionalParameter(command, input.CaseId);
@@ -118,7 +119,7 @@ public class ContractUpdateService : IContractUpdateService
 
             await command.ExecuteNonQueryAsync();
 
-            response.Data.NewContractDetailId = contractDetailId;
+            response.Data.newContractDetailId = contractDetailId;
             response.IsValid = true;
             response.StatusCode = 200;
         }
