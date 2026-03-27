@@ -1,0 +1,316 @@
+CREATE OR REPLACE PROCEDURE SOURCE.CLUB51.CREATEUPDATE_CASE("DAECASE" VARCHAR)
+RETURNS VARCHAR
+LANGUAGE JAVASCRIPT
+COMMENT='SP to insert a 51club case from the DAE frontend'
+EXECUTE AS OWNER
+AS '
+    var DoSCD = 0; //manage slowly changing dimension if there is an update
+    var ErrMsg = "";
+    var isNewCase = 0; // 1=New
+    var manuallymaintained = 1; // Default comming from UI
+    var d = new Date();
+    d.setHours(d.getHours() + 2); // add 2 hours //ALEX
+    var currDateTime = d.toISOString().replace(/T/, '' '').replace(/\\..+/, '''');
+    const PASarr = [''BANCS PAS'',''OMEGA PAS'',''UNIT TRUST PAS'',''WEALTH PAS''];
+
+
+    // Inline debug logging
+    function logDebug(message) {
+        var debugSql = "INSERT INTO SOURCE.CLUB51.ALEXDEBUG (s) SELECT ''" + message + "'';";
+        snowflake.createStatement({sqlText: debugSql}).execute();
+    }
+
+
+
+
+
+
+
+    // Insert Case into source table SOURCE.CLUB51.DAECASE
+    var sql_command = "INSERT INTO SOURCE.CLUB51.DAECASE(c) SELECT ''" + DAECASE + "'';";
+    snowflake.createStatement( {sqlText: sql_command} ).execute();
+    try {
+     //   sql_command = "SELECT c from SOURCE.CLUB51.DAECASE where INSERTDATE=''2025-08-20 13:47:13.688''::TIMESTAMP_NTZ";
+     //   var stmt = snowflake.createStatement( {sqlText: sql_command} );
+     //   var rs = stmt.execute();
+     //   rs.next();
+     //   var DAECHECKCASE = rs.getColumnValue(1);
+     //   DAECASE = DAECHECKCASE;
+       //  return DAECASE;
+
+        sql_command = "";
+        sql_command = "WITH x AS (SELECT parse_json(''" + DAECASE + "''::variant) as str) ";
+        sql_command += "SELECT str:caseId::string as CASE_ID, \\
+            str:detail:caseDetails.assignedTo::string as ASSIGNEDTO, \\
+            str:detail:caseDetails.clientDateOfBirth::string as CLIENTDOB, \\
+            str:detail:caseDetails.clientInitials::string CLIENTINITIALS, \\
+            str:detail:caseDetails.clientLastName::string CLIENTLASTNAME, \\
+            str:detail:caseDetails.clientType::string as CLIENTTYPE, \\
+            str:detail:caseDetails.companyName::string as COMPANYNAME, \\
+            str:detail:caseDetails.contractNumber::string as CONTRACTNUMBER, \\
+            str:detail:caseDetails.createdBy::string as CREATEDBY, \\
+            str:detail:caseDetails.createdOn::string as CREATEDON, \\
+            str:detail:caseDetails.initiatedOnDate::string as INITIATEDONDATE, \\
+            str:detail:caseDetails.lastModified::string as LASTMODIFIED, \\
+            str:detail:caseDetails.lastModifiedBy::string as LASTMODIFIEDBY, \\
+            str:detail:caseDetails.lastRunDate::string as LASTRUNDATE, \\
+            str:detail:caseDetails.lastUpdated::string as LASTUPDATED, \\
+            str:detail:caseDetails.location::string as LOCATION, \\
+            str:detail:caseDetails.productName::string as PRODUCTNAME, \\
+            str:detail:caseDetails.source::string as SOURCE, \\
+            str:detail:caseDetails.splitCommission::string as ISSPLITCOMMISSION, \\
+            str:detail:caseDetails.status::string as STATUS, \\
+            str:detail:caseDetails.state::string as STATE, \\
+            str:detail:caseDetails.teamOwner::string as TEAMOWNER, \\
+            str:detail:caseDetails.teamOwnerCode::string as TEAMOWNERCODE, \\
+            cd.value:modifiedBy::string as CD_MODIFIEDBY, \\
+            cd.value:modifiedOn::string as CD_MODIFIEDON, \\
+            fi.value:modifiedOn::string as FI_MODIFIEDON, \\
+            fi.value:modifiedBy::string as FI_MODIFIEDBY FROM  x, \\
+            LATERAL FLATTEN(input=>str:detail.contractDetails) cd, \\
+            LATERAL FLATTEN(input=>str:detail.financialInformation) fi;";
+
+        var stmt = snowflake.createStatement( {sqlText: sql_command} );
+        var rs = stmt.execute();
+        rs.next();
+
+        var caseno = rs.getColumnValue("CASE_ID");
+        var assignedto = (rs.getColumnValue("ASSIGNEDTO") == null) ? '''' : rs.getColumnValue("ASSIGNEDTO");
+        var clientDateOfBirth = (rs.getColumnValue("CLIENTDOB") === null ||
+                                    rs.getColumnValue("CLIENTDOB") === undefined ||
+                                    rs.getColumnValue("CLIENTDOB") === '''') ? ''9999-12-31'' : rs.getColumnValue("CLIENTDOB");
+
+        // var clientDateOfBirth = (isNaN(new Date(rs.getColumnValue("CLIENTDOB")))) ? ''9999-12-31'' : rs.getColumnValue("CLIENTDOB");
+
+        var clientInitials = (rs.getColumnValue("CLIENTINITIALS") == null) ? '''' : rs.getColumnValue("CLIENTINITIALS");
+        var clientLastName = (rs.getColumnValue("CLIENTLASTNAME") == null) ? '''' : rs.getColumnValue("CLIENTLASTNAME");
+        var clienttype = (rs.getColumnValue("CLIENTTYPE") == null) ? '''' : rs.getColumnValue("CLIENTTYPE");
+        var companyname = (rs.getColumnValue("COMPANYNAME") == null) ? '''' : rs.getColumnValue("COMPANYNAME");
+        var contractnumber = (rs.getColumnValue("CONTRACTNUMBER") == null) ? '''' : rs.getColumnValue("CONTRACTNUMBER");
+        var createdby = (rs.getColumnValue("CREATEDBY") == null) ? '''' : rs.getColumnValue("CREATEDBY");
+        var createdon = (rs.getColumnValue("CREATEDON") == null) ? ''9999-12-31'' : rs.getColumnValue("CREATEDON");
+        var initondate = (rs.getColumnValue("INITIATEDONDATE") == null) ? ''9999-12-31'' : rs.getColumnValue("INITIATEDONDATE");
+        var initiatedondate = initondate.substring(0, 10);
+
+        //var initiatedondate = initondate.split("T");
+        //return initiatedondate;
+
+        var lastmodified = (rs.getColumnValue("LASTMODIFIED") == null) ? ''9999-12-31'' : rs.getColumnValue("LASTMODIFIED");
+        var lastmodifiedby = (rs.getColumnValue("LASTMODIFIEDBY") == null) ? '''' : rs.getColumnValue("LASTMODIFIEDBY");
+        var lastrundate = (rs.getColumnValue("LASTRUNDATE") == null) ? ''9999-12-31'' : rs.getColumnValue("LASTRUNDATE");
+        var lastupdated = (rs.getColumnValue("LASTUPDATED") == null) ? ''19999-12-31'' : rs.getColumnValue("LASTUPDATED");
+        var location = (rs.getColumnValue("LOCATION") == null) ? '''' : rs.getColumnValue("LOCATION");
+
+        //ALEX
+        var cd_modifiedBy =(rs.getColumnValue("CD_MODIFIEDBY") == null) ? '''' : rs.getColumnValue("CD_MODIFIEDBY");
+        var fi_modifiedBy =(rs.getColumnValue("FI_MODIFIEDBY") == null) ? '''' : rs.getColumnValue("FI_MODIFIEDBY");
+        var cd_mdifiedOn =  rs.getColumnValue("CD_MODIFIEDON");
+        var fi_mdifiedOn =  rs.getColumnValue("FI_MODIFIEDON");
+
+        var rs1 = snowflake.createStatement(
+            {
+            sqlText: `CALL SOURCE.CLUB51.GETREFDATA(?,?,?,?,?)`,
+            binds:[''SOURCE.CLUB51.PRODUCT'', ''PRODUCT_ID'', ''PRODUCT_NAME'', rs.getColumnValue(''PRODUCTNAME''), '''']
+            }
+        ).execute();
+
+        rs1.next();
+        var productid = rs1.getColumnValue(1);
+
+        var source = (rs.getColumnValue("SOURCE") == null) ? '''' : rs.getColumnValue("SOURCE");
+        var isplitcomm = rs.getColumnValue("ISSPLITCOMMISSION");
+        var issplitcommission = (isplitcomm.toUpperCase() == ''TRUE'' || isplitcomm == ''1'') ? 1:0;
+
+        var rs2 = snowflake.createStatement(
+            {
+            sqlText: `CALL SOURCE.CLUB51.GETREFDATA(?,?,?,?,?)`,
+            binds:[''SOURCE.CLUB51.FIFTYONECLUB_STATUS'', ''STATUS_ID'', ''STATUS_DESC'', rs.getColumnValue(''STATUS''), ''CASE'']
+            }
+        ).execute();
+
+        rs2.next();
+        var statusid = rs2.getColumnValue(1);
+
+        var rs3 = snowflake.createStatement(
+            {
+            sqlText: `CALL SOURCE.CLUB51.GETREFDATA(?,?,?,?,?)`,
+            binds:[''SOURCE.CLUB51.FIFTYONECLUB_STATE'', ''STATE_ID'', ''STATE_DESC'', rs.getColumnValue(''STATE''), ''CASE'']
+            }
+        ).execute();
+
+        rs3.next();
+        var stateid = rs3.getColumnValue(1);
+
+        var teamowner = (rs.getColumnValue("TEAMOWNER") == null) ? '''' : rs.getColumnValue("TEAMOWNER");
+        var teamcode = (rs.getColumnValue("TEAMOWNERCODE") == null) ? '''' : rs.getColumnValue("TEAMOWNERCODE");
+        //teamowner.match(/\\(([^)]+)\\)/)[1];
+ var mismatchFound = false;
+
+var rsMods = snowflake.createStatement(
+{
+    sqlText: `CALL SOURCE.CLUB51.GET_LATEST_MODIFIERS(?)`,
+    binds: [DAECASE]
+}
+).execute();
+rsMods.next()
+    var jsonObj = rsMods.getColumnValue(1); // If VARIANT, this is already an object
+    var theLatestMod = jsonObj.latest.ts;
+    var theLatestModBy = jsonObj.latest.by;
+
+
+   if (!PASarr.includes(theLatestModBy) ) {
+  // logDebug("Before");
+         lastmodifiedby = theLatestModBy;
+         lastmodified = theLatestMod;
+        mismatchFound = true;
+ // logDebug("theLatestMod:"+ lastmodified + "    theLatestModBy:"+ lastmodifiedby);
+
+    }
+
+
+        if (source.toUpperCase() === ''MANUAL'' ||
+            (source.toUpperCase() === ''PP INTERFACE'' && mismatchFound)) {
+            manuallymaintained = 1;
+        } else {
+            manuallymaintained = 0;
+        }
+
+
+        // Check if it is an existing (caseno != 0), if not insert Case into source table SOURCE.CLUB51.FIFTYONECLUB_CASE
+        // Else compare and do SCD2 if different (Close record EndDate = CurrentDate and insert new record)
+        if (caseno != "0")
+            {
+            var sqlcheck = "SELECT HASH_AGG(CASE_STATUS_ID,CASE_STATE_ID,CASE_ASSIGNEDTO,CASE_CONTRACTNUMBER, \\
+                CASE_SOURCE,CASE_LOCATION,CASE_CUSTOMERTINITIALS,CASE_CUSTOMERLASTNAME,CASE_CUSTOMERTYPE, \\
+                CASE_CUSTOMERDATEOFBIRTH,CASE_COMPANYNAME,CASE_PRODUCT_ID,CASE_ISSPLITCOMMISSION,CASE_TEAMOWNER, \\
+                CASE_CREATEDBY,CASE_LASTMODIFIEDBY,CASE_LASTMODIFIED,CASE_MANUALLYMAINTAINED) FROM SOURCE.CLUB51.FIFTYONECLUB_CASE WHERE \\
+                CASE_ID=''" + caseno + "'' AND CASE_ENDDATE = ''9999-12-31''::DATE";
+            rs3 = snowflake.createStatement( {sqlText: sqlcheck} ).execute();
+            rs3.next();
+            var casehash = rs3.getColumnValue(1);
+
+
+
+            sqlcheck = "";
+            sqlcheck = "SELECT HASH_AGG(" + statusid + "," + stateid + ",''" + assignedto + "'',''" + contractnumber + "''"
+            sqlcheck += ",''" + source + "'',''" + location + "'',''" + clientInitials + "'',''" + clientLastName + "''"
+            sqlcheck += ",''" + clienttype + "'',''" + clientDateOfBirth + "''::DATE,''" + companyname + "''," + productid
+            sqlcheck += "," + issplitcommission + ",''" + teamowner + "'',''" + createdby + "''"
+            sqlcheck += ",''" + lastmodifiedby + "'',''" + lastmodified + "''," + manuallymaintained + ") AS VAL;"
+            rs3 = snowflake.createStatement( {sqlText: sqlcheck} ).execute();
+            rs3.next();
+            var newhash = rs3.getColumnValue(1);
+
+            //return "Hash " + casehash + " NewHash " + newhash;
+           // logDebug("casehash: "+casehash+ "  -NewHash:" + newhash)
+            if(casehash != newhash)
+                {
+                sqlcheck = "";
+                sqlcheck = "UPDATE SOURCE.CLUB51.FIFTYONECLUB_CASE SET CASE_ENDDATE=CURRENT_DATE() WHERE \\
+                        CASE_ID=''" + caseno + "'' AND CASE_ENDDATE = ''9999-12-31''::DATE;";
+                snowflake.createStatement( {sqlText: sqlcheck} ).execute();
+                DoSCD = 1;
+                }
+            }
+
+        if (caseno == "0" || DoSCD == 1)
+            {
+            isNewCase = 1;
+            // Get Surrogate Key as our unique case number
+            var sql;
+            if(caseno == "0" && DoSCD == 0)
+                {
+                sql = "SELECT SHA2(CONCAT(''" + contractnumber + "'',''" + initiatedondate + "''::DATE, 512)) AS VAL;";
+                var rs4 = snowflake.createStatement( {sqlText: sql} ).execute();
+                rs4.next();
+                caseno = rs4.getColumnValue(1);
+
+                // Check if this case is a duplicate if it is return
+                sql = "";
+                sql = "SELECT COUNT(*) AS VAL FROM SOURCE.CLUB51.FIFTYONECLUB_CASE WHERE CASE_ENDDATE = ''9999-12-31''::DATE AND \\
+                        CASE_ID=''" + caseno + "'';";
+                var rsDup = snowflake.createStatement( {sqlText: sql} ).execute();
+                rsDup.next();
+                if (rsDup.getColumnValue(1) > 0)
+                    {
+                    return "Failed: Duplicate Case : " + caseno;
+                    }
+                }
+
+            // New Case = insert new record into SOURCE.CLUB51.FIFTYONECLUB_CASE
+            sql = "INSERT INTO SOURCE.CLUB51.FIFTYONECLUB_CASE(CASE_INITIATEDONDATE, \\
+                    CASE_LASTUPDATED,CASE_STATUS_ID,CASE_STATE_ID,CASE_ASSIGNEDTO,CASE_CONTRACTNUMBER, \\
+                    CASE_SOURCE,CASE_LOCATION,CASE_CUSTOMERTINITIALS,CASE_CUSTOMERLASTNAME, \\
+                    CASE_CUSTOMERTYPE,CASE_CUSTOMERDATEOFBIRTH,CASE_COMPANYNAME,CASE_PRODUCT_ID, \\
+                    CASE_ISSPLITCOMMISSION,CASE_TEAMOWNER,CASE_TEAMOWNER_CODE,CASE_CREATEDBY,CASE_CREATEDON, \\
+                    CASE_LASTMODIFIEDBY,CASE_LASTMODIFIED,CASE_LASTRUNDATE,CASE_MANUALLYMAINTAINED,CASE_ID) \\
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            stmt = snowflake.createStatement(
+                {
+                sqlText: sql,
+                binds: [initiatedondate, lastupdated, statusid, stateid, assignedto, contractnumber, source,
+                location, clientInitials, clientLastName, clienttype, clientDateOfBirth, companyname, productid,
+                issplitcommission, teamowner, teamcode, createdby, createdon, lastmodifiedby, lastmodified, lastrundate, manuallymaintained, caseno]
+                });
+            stmt.execute();
+            }
+
+        // Call PROCEDURE SOURCE.CLUB51.CREATEUPDATE_CONTRACTDETAILS(CASEID VARCHAR, DAECASE VARCHAR)
+        var rs5 = snowflake.createStatement(
+            {
+            sqlText: `CALL SOURCE.CLUB51.CREATEUPDATE_CONTRACTDETAILS(?, ?)`,
+            binds:[caseno, DAECASE] //DAE
+            }).execute();
+
+        rs5.next();
+        var iCD_Ret = rs5.getColumnValue(1);
+        if(iCD_Ret != "1")
+            {
+            ErrMsg = iCD_Ret;
+
+            // Delete case
+            //sql = "DELETE FROM SOURCE.CLUB51.FIFTYONECLUB_CASE WHERE CASE_ID=''" + caseno + "'';";
+            //snowflake.createStatement( {sqlText: sql} ).execute();
+            return ErrMsg;
+            }
+
+        // Call SOURCE.CLUB51.CREATEUPDATE_FINANCIALINFORMATION(CASEID VARCHAR, statusid VARCHAR, DAECASE VARCHAR)
+        //return "Calling CREATEUPDATE_FINANCIALINFORMATION";
+        var rs6 = snowflake.createStatement(
+            {
+            sqlText: `CALL SOURCE.CLUB51.CREATEUPDATE_FINANCIALINFORMATION(?, ?, ?)`,
+            binds:[caseno, statusid, DAECASE] //DAE
+            }).execute();
+
+        rs6.next();
+        var iFI_Ret = rs6.getColumnValue(1);
+        if(iFI_Ret != "1")
+            {
+            ErrMsg = iFI_Ret;
+
+            // Delete case and contractdetails
+            //sql = "DELETE FROM SOURCE.CLUB51.FIFTYONECLUB_CASE WHERE CASE_ID=''" + caseno + "'';";
+            //snowflake.createStatement( {sqlText: sql} ).execute();
+            //sql = "DELETE FROM SOURCE.CLUB51.FIFTYONECLUB_CONTRACTDETAIL WHERE CD_CASE_ID=''" + caseno + "'';";
+            //snowflake.createStatement( {sqlText: sql} ).execute();
+
+            return ErrMsg;
+            }
+        }
+    catch (err)
+        {
+        if(isNewCase == 1) // Only delete if new case
+            {
+            sql = "DELETE FROM SOURCE.CLUB51.FIFTYONECLUB_CASE WHERE CASE_ID=''" + caseno + "'';";
+            snowflake.createStatement( {sqlText: sql} ).execute();
+            sql = "DELETE FROM SOURCE.CLUB51.FIFTYONECLUB_CONTRACTDETAIL WHERE CD_CASE_ID=''" + caseno + "'';";
+            snowflake.createStatement( {sqlText: sql} ).execute();
+            sql = "DELETE FROM FIFTYONECLUB_FINANCIALINFORMATION WHERE FI_CASE_ID=''" + caseno + "'';";
+            snowflake.createStatement( {sqlText: sql} ).execute();
+            }
+
+        ErrMsg="Case Failed: " + err;   // Return a success/error indicator.
+        }
+
+    return (ErrMsg == "") ? caseno : ErrMsg;
+';
