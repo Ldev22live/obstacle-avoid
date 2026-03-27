@@ -119,6 +119,8 @@ public class ContractUpdateService : IContractUpdateService
             await command.ExecuteNonQueryAsync();
 
             response.Data.NewContractDetailId = contractDetailId;
+            response.IsValid = true;
+            response.StatusCode = 200;
         }
         catch (Exception ex)
         {
