@@ -24,5 +24,6 @@ namespace Ade.Club51.Lambda.Contract.Update.Models
     public class Data
     {
         public string NewContractDetailId { get; set; } = string.Empty;
+        public string NewCaseId { get; set; } = string.Empty;
     }
 }

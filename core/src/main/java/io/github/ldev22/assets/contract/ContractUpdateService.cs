@@ -61,23 +61,10 @@ public class ContractUpdateService : IContractUpdateService
                 throw new InvalidOperationException("No ID returned from the stored procedure.");
             }
 
-            response.Data.newContractDetailId = newId;
+            var verifiedCaseId = await TryGetCaseId(connection, db, schema, "FIFTYONECLUB_CASE", input.CaseId);
+            response.Data.NewContractDetailId = verifiedCaseId ?? input.CaseId;
             response.IsValid = true;
             response.StatusCode = 200;
-            //after SP execute similar query
-            var caseId = request.Submission.CaseNumber;
-            var salesCode = request.Submission.SalesCode;
-            var productId = request.Submission.New51ClubsubmissionId;
-
-            LambdaLogger.Log($"INFO: Parameters for verification query — CaseId: {caseId}, SalesCode: {salesCode}, ProductId: {productId}");
-
-            var queryBuilder = new StringBuilder();
-            queryBuilder.AppendLine($"SELECT SUBMISSIONS_ID FROM {db}.CLUB51.FIFTYONECLUB_SUBMISSIONS");
-            queryBuilder.AppendLine("WHERE SUBMISSIONS_ENDDATE = '9999-12-31'");
-            queryBuilder.AppendLine("AND SUBMISSIONS_ISREVERSAL = 0");
-            queryBuilder.AppendLine($"AND SUBMISSIONS_CASE_ID = '{caseId?.Replace("'", "''")}'");
-            queryBuilder.AppendLine("AND SUBMISSIONS_ISLATEST = 1");
-            queryBuilder.AppendLine($"AND SUBMISSIONS_SALESCODE = '{salesCode?.Replace("'", "''")}'");
 
             LambdaLogger.Log($"INFO: UpdateContract completed via stored procedure. Response: {JsonConvert.SerializeObject(response)}");
             return response;
@@ -87,6 +74,55 @@ public class ContractUpdateService : IContractUpdateService
             ex = ex.InnerException ?? ex;
             LambdaLogger.Log($"ERROR: UpdateContract failed ({db}.{schema}.{procName}). Error: {ex.Message} | StackTrace: {ex.StackTrace}");
             throw;
+        }
+    }
+
+    private async Task<string?> TryGetCaseId(IDbConnection connection, string db, string schema, string table, string? caseId)
+    {
+        if (string.IsNullOrWhiteSpace(caseId))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = $@"
+SELECT
+    C.CASE_ID AS CaseId
+FROM {db}.CLUB51.FIFTYONECLUB_FINANCIALINFORMATION C
+WHERE C.CASE_ID = :CaseId
+  AND (C.CASE_ENDDATE IS NULL OR C.CASE_ENDDATE = '9999-12-31')
+LIMIT 1";
+            command.CommandType = CommandType.Text;
+
+            var p = command.CreateParameter();
+            p.ParameterName = "CaseId";
+            p.DbType = DbType.String;
+            p.Value = caseId;
+            command.Parameters.Add(p);
+
+            if (command is not System.Data.Common.DbCommand dbCommand)
+            {
+                throw new InvalidOperationException($"Command type '{command.GetType().FullName}' does not support async scalar operations.");
+            }
+
+            var result = await dbCommand.ExecuteScalarAsync();
+            var verifiedCaseId = result == null || result == DBNull.Value ? null : result.ToString();
+
+            if (string.IsNullOrWhiteSpace(verifiedCaseId))
+            {
+                LambdaLogger.Log($"WARN: Case verification query did not find CASE_ID for caseId '{caseId}'.");
+                return null;
+            }
+
+            return verifiedCaseId;
+        }
+        catch (Exception ex)
+        {
+            ex = ex.InnerException ?? ex;
+            LambdaLogger.Log($"WARN: Case verification query failed for caseId '{caseId}': {ex.Message}");
+            return null;
         }
     }
 
