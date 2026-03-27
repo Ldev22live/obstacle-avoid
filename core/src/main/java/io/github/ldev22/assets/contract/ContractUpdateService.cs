@@ -13,12 +13,21 @@ public class ContractUpdateService : IContractUpdateService
         LambdaLogger.Log("INFO: ContractUpdateService initialized successfully.");
     }
 
-
-    private async Task<ResponseData> UpdateContract(RequestData input)
+    public async Task<ResponseData> UpdateContract(RequestData input)
     {
+        LambdaLogger.Log($"INFO: UpdateContract called with input: {JsonConvert.SerializeObject(input)}");
+
+        var response = new ResponseData();
+
+        var procName = Environment.GetEnvironmentVariable("CONTRACTDETAIL_PROC") ?? "CREATEUPDATE_CASE";
+        var db = _dbConfig.Database;
+        var schema = _dbConfig.Schema;
 
         try
         {
+            using var connection = _connectionFactory.CreateConnection();
+            await connection.OpenAsync();
+
             var options = new System.Text.Json.JsonSerializerOptions
             {
                 PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
@@ -27,10 +36,7 @@ public class ContractUpdateService : IContractUpdateService
 
             var json = System.Text.Json.JsonSerializer.Serialize(input, options);
             var escaped = "'" + json.Replace("'", "''") + "'";
-            var procName = "CREATEUPDATE_CASE";
-            var connection = _connectionFactory.CreateConnection();
-            var db = _dbConfig.DbEdrDb;
-            var schema = _dbConfig.DbEdrSchemaClun51;
+
             using var command = connection.CreateCommand();
             command.CommandText = $"CALL {db}.{schema}.{procName}({escaped})";
             command.CommandType = CommandType.Text;
@@ -44,31 +50,31 @@ public class ContractUpdateService : IContractUpdateService
 
             using var reader = await dbCommand.ExecuteReaderAsync();
 
-            ResponseData result = null;
+            string? newId = null;
             while (await reader.ReadAsync())
             {
-                result = reader[0]?.ToString();
+                newId = reader[0]?.ToString();
             }
 
-            if (string.IsNullOrWhiteSpace(result))
+            if (string.IsNullOrWhiteSpace(newId))
             {
-                LambdaLogger.Log("WARN: Stored procedure returned no value; falling back to MERGE.");
-                return null;
+                throw new InvalidOperationException("No ID returned from the stored procedure.");
             }
 
-            return result;
+            response.Data.newContractDetailId = newId;
+            response.IsValid = true;
+            response.StatusCode = 200;
+
+            LambdaLogger.Log($"INFO: UpdateContract completed via stored procedure. Response: {JsonConvert.SerializeObject(response)}");
+            return response;
         }
         catch (Exception ex)
         {
             ex = ex.InnerException ?? ex;
-            LambdaLogger.Log($"WARN: Stored procedure path failed ({db}.{schema}.{procName}). Falling back to MERGE. Error: {ex.Message}");
-            return null;
+            LambdaLogger.Log($"ERROR: UpdateContract failed ({db}.{schema}.{procName}). Error: {ex.Message} | StackTrace: {ex.StackTrace}");
+            throw;
         }
     }
 
-
-    Task<ResponseData> IContractUpdateService.UpdateContract(RequestData input)
-    {
-        return UpdateContract(input);
-    }
+    Task<ResponseData> IContractUpdateService.UpdateContract(RequestData input) => UpdateContract(input);
 }
