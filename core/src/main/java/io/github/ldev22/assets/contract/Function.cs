@@ -112,19 +112,7 @@ public class Function
 
         try
         {
-            var debugListTables = bool.TryParse(Environment.GetEnvironmentVariable("DEBUG_LIST_TABLES"), out var debugEnabled) && debugEnabled;
-            if (debugListTables && _caseDetailsService is ContractUpdateService contractUpdateService)
-            {
-                LambdaLogger.Log("INFO: DEBUG_LIST_TABLES enabled. Listing accessible Snowflake tables...");
-                await contractUpdateService.DebugListAccessibleTables();
-            }
 
-            var debugDescribeContractDetail = bool.TryParse(Environment.GetEnvironmentVariable("DEBUG_DESCRIBE_CONTRACTDETAIL"), out var debugDescribeEnabled) && debugDescribeEnabled;
-            if (debugDescribeContractDetail && _caseDetailsService is ContractUpdateService contractUpdateService2)
-            {
-                LambdaLogger.Log("INFO: DEBUG_DESCRIBE_CONTRACTDETAIL enabled. Describing FIFTYONECLUB_CONTRACTDETAIL columns...");
-                await contractUpdateService2.DebugDescribeTableColumns("FIFTYONECLUB_CONTRACTDETAIL");
-            }
 
             LambdaLogger.Log("INFO: Calling _adviserService.GetAdviserDetails...");
             var response = await _caseDetailsService.UpdateContract(input);
