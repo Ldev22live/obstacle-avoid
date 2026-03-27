@@ -1,3 +1,30 @@
-INFO: UpdateContract completed. Response: {"data":{"newContractDetailId":"ecbe2bc9-5c6d-469d-be07-02893dca4938"},"isValid":false,"statusCode":400,"messages":[],"errors":[]}
-INFO: Response received: {"data":{"newContractDetailId":"ecbe2bc9-5c6d-469d-be07-02893dca4938"},"isValid":false,"statusCode":400,"messages":[],"errors":[]}
-INFO: FunctionHandler execution completed.
+
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <AWSProjectType>Lambda</AWSProjectType>
+    <!-- This property makes the build directory similar to a publish directory and helps the AWS .NET Lambda Mock Test Tool find project dependencies. -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <!-- Generate ready to run images during publishing to improve cold start time. -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+  </PropertyGroup>
+  <ItemGroup>
+	  <PackageReference Include="Amazon.Lambda.Core" Version="2.8.1" />
+	  <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="2.2.5" />
+	  <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.5" />
+	  <PackageReference Include="Dapper" Version="2.1.72" />
+	  <PackageReference Include="Dynatrace.OpenTelemetry" Version="1.333.1" />
+	  <PackageReference Include="Dynatrace.OpenTelemetry.Instrumentation.AwsLambda" Version="1.333.1" />
+	  <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.5" />
+	  <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="10.0.5" />
+	  <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.5" />
+	  <PackageReference Include="OpenTelemetry.Contrib.Instrumentation.AWS" Version="1.0.2" />
+	  <PackageReference Include="OpenTelemetry.Instrumentation.AWSLambda" Version="1.15.0" />
+	  <PackageReference Include="Snowflake.Data" Version="5.4.1" />
+	  <PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
+  </ItemGroup>
+</Project>
