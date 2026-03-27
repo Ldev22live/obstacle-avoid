@@ -1,12 +1,9 @@
-ERROR: Error: No corresponding Snowflake type for type AnsiString. SqlState: , VendorCode: 270053, QueryId:  | StackTrace:    at Snowflake.Data.Core.SFDataConverter.CSharpTypeValToSfTypeVal(DbType srcType, Object srcVal)
-   at Snowflake.Data.Client.SnowflakeDbCommand.convertToBindList(List`1 parameters)
-   at Snowflake.Data.Client.SnowflakeDbCommand.ExecuteInternalAsync(CancellationToken cancellationToken, Boolean describeOnly, Boolean asyncExec)
-   at Snowflake.Data.Client.SnowflakeDbCommand.ExecuteNonQueryAsync(CancellationToken cancellationToken)
-   at Ade.Club51.Lambda.Contract.Update.Services.ContractUpdateService.UpdateContract(RequestData input) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Services\ContractUpdateService.cs:line 135
-ERROR: Exception occurred in _adviserService.GetAdviserDetails - Error: No corresponding Snowflake type for type AnsiString. SqlState: , VendorCode: 270053, QueryId:  | StackTrace:    at Snowflake.Data.Core.SFDataConverter.CSharpTypeValToSfTypeVal(DbType srcType, Object srcVal)
-   at Snowflake.Data.Client.SnowflakeDbCommand.convertToBindList(List`1 parameters)
-   at Snowflake.Data.Client.SnowflakeDbCommand.ExecuteInternalAsync(CancellationToken cancellationToken, Boolean describeOnly, Boolean asyncExec)
-   at Snowflake.Data.Client.SnowflakeDbCommand.ExecuteNonQueryAsync(CancellationToken cancellationToken)
-   at Ade.Club51.Lambda.Contract.Update.Services.ContractUpdateService.UpdateContract(RequestData input) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Services\ContractUpdateService.cs:line 135
-   at Ade.Club51.Lambda.Contract.Update.Services.ContractUpdateService.UpdateContract(RequestData input) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Services\ContractUpdateService.cs:line 155
-   at Ade.Club51.Lambda.Contract.Update.Function.FunctionHandlerInternalAsync(RequestData input, ILambdaContext context) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Function.cs:line 133
+{
+  "errorType": "LambdaValidationException",
+  "errorMessage": "Could not find the specified handler assembly with the file name 'Ade.Club51.Contract.Update, Culture=neutral, PublicKeyToken=null'. The assembly should be located in the root of your uploaded .zip file.",
+  "stackTrace": [
+    "at Amazon.Lambda.RuntimeSupport.Bootstrap.UserCodeLoader.Init(Action`1 customerLoggingAction) in /src/Repo/Libraries/src/Amazon.Lambda.RuntimeSupport/Bootstrap/UserCodeLoader.cs:line 104",
+    "at Amazon.Lambda.RuntimeSupport.Bootstrap.UserCodeInitializer.InitializeAsync() in /src/Repo/Libraries/src/Amazon.Lambda.RuntimeSupport/Bootstrap/UserCodeInitializer.cs:line 46",
+    "at Amazon.Lambda.RuntimeSupport.LambdaBootstrap.InitializeAsync() in /src/Repo/Libraries/src/Amazon.Lambda.RuntimeSupport/Bootstrap/LambdaBootstrap.cs:line 331"
+  ]
+}
