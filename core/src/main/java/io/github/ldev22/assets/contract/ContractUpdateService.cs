@@ -61,8 +61,9 @@ public class ContractUpdateService : IContractUpdateService
                 throw new InvalidOperationException("No ID returned from the stored procedure.");
             }
 
-            var verifiedCaseId = await TryGetCaseId(connection, db, schema, "FIFTYONECLUB_CASE", input.CaseId);
+            var verifiedCaseId = await TryGetCaseId(connection, db, schema, input.CaseId);
             response.Data.NewContractDetailId = verifiedCaseId ?? input.CaseId;
+            response.Data.NewCaseId = verifiedCaseId ?? string.Empty;
             response.IsValid = true;
             response.StatusCode = 200;
 
@@ -77,7 +78,7 @@ public class ContractUpdateService : IContractUpdateService
         }
     }
 
-    private async Task<string?> TryGetCaseId(IDbConnection connection, string db, string schema, string table, string? caseId)
+    private async Task<string?> TryGetCaseId(IDbConnection connection, string db, string schema, string? caseId)
     {
         if (string.IsNullOrWhiteSpace(caseId))
         {
@@ -90,9 +91,9 @@ public class ContractUpdateService : IContractUpdateService
             command.CommandText = $@"
 SELECT
     C.CASE_ID AS CaseId
-FROM {db}.CLUB51.FIFTYONECLUB_FINANCIALINFORMATION C
+FROM {db}.{schema}.FIFTYONECLUB_CASE C
 WHERE C.CASE_ID = :CaseId
-  AND (C.CASE_ENDDATE IS NULL OR C.CASE_ENDDATE = '9999-12-31')
+  AND C.CASE_ENDDATE = '9999-12-31'::DATE
 LIMIT 1";
             command.CommandType = CommandType.Text;
 
