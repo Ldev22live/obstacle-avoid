@@ -61,16 +61,8 @@ public class ContractUpdateService : IContractUpdateService
             }
 
             var verifiedCaseId = await TryGetCaseId(connection, db, schema, input.CaseId);
-            var contractDetailId = await TryGetContractDetailId(
-                connection,
-                db,
-                schema,
-                verifiedCaseId ?? input.CaseId,
-                input?.ContactDetail?.ContractNumber);
 
-            response.Data.NewContractDetailId = !string.IsNullOrWhiteSpace(contractDetailId)
-                ? contractDetailId
-                : (input?.ContactDetail?.ContractDetailId ?? string.Empty);
+            response.Data.NewContractDetailId = procResult;
             response.Data.NewCaseId = verifiedCaseId ?? string.Empty;
             response.IsValid = true;
             response.StatusCode = 200;
