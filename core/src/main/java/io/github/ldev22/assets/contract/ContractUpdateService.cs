@@ -7,23 +7,10 @@ using Ade.Club51.Lambda.Contract.Update.Config;
 using Ade.Club51.Lambda.Contract.Update.Interface;
 using Ade.Club51.Lambda.Contract.Update.Models;
 using Amazon.Lambda.Core;
-using Amazon.Runtime;
-using Apache.Arrow;
-using Azure;
-using Google.Protobuf.WellKnownTypes;
-using Mono.Unix.Native;
 using Newtonsoft.Json;
-using Snowflake.Data.Client;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Security.Principal;
-using System.Text;
 using System.Threading.Tasks;
-using static System.Net.WebRequestMethods;
 
 namespace Ade.Club51.Lambda.Contract.Update.Services
 {
@@ -54,11 +41,6 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                     PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
                     WriteIndented = true
                 };
-
-                // Transform input to SP expected format like CaseService does with EventModel
-                var eventPayload = CreateEventPayload(input);
-                var json = System.Text.Json.JsonSerializer.Serialize(eventPayload, options);
-                var escaped = "'" + json.Replace("'", "''") + "'";
 
                 var db = _dbConfig.DbEdrDb;
                 var schema = _dbConfig.DbEdrSchemaClun51;
@@ -141,22 +123,4 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
         Task<ResponseData> IContractUpdateService.UpdateContract(RequestData input) => UpdateContract(input);
     }
 }
-{
-    "caseId": "5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc",
-    "contactDetail": {
-        "contractDetailId": "ecbe2bc9-5c6d-469d-be07-02893dca4938",
-        "contractNumber": "19604880",
-        "productName": "Orion - SP",
-        "investType": "Single Premium",
-        "investAmount": "23.00",
-        "payMethod": "Debit Order",
-        "commAllowance": "100.00",
-        "fpFee": "222.00",
-        "negCommAllowance": "100.00",
-        "negCommPercentage": "100.00",
-        "createdBy": "OneConnectBA",
-        "createdOn": "2026-03-23T03:33:35.601",
-        "modifiedBy": "OneConnectBA",
-        "modifiedOn": "2026-03-23T11:26:00.210"
-    }
-}
+
