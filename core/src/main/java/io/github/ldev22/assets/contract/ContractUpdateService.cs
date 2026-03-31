@@ -139,14 +139,14 @@ public class ContractUpdateService : IContractUpdateService
             command.CommandText = $@"
 SELECT {idColumn}
 FROM {db}.{schema}.FIFTYONECLUB_CONTRACTDETAIL
-WHERE CD_CASE_ID = :CaseId
+WHERE CD_CASE_ID = @CaseId
   AND CD_ENDDATE = '9999-12-31'::DATE
-{(hasContractNumber && !string.IsNullOrWhiteSpace(contractNumber) ? "  AND CD_CONTRACTNUMBER = :ContractNumber\n" : string.Empty)}
+{(hasContractNumber && !string.IsNullOrWhiteSpace(contractNumber) ? "  AND CD_CONTRACTNUMBER = @ContractNumber\n" : string.Empty)}
 LIMIT 1";
             command.CommandType = CommandType.Text;
 
             var pCaseId = command.CreateParameter();
-            pCaseId.ParameterName = "CaseId";
+            pCaseId.ParameterName = "@CaseId";
             pCaseId.DbType = DbType.String;
             pCaseId.Value = caseId;
             command.Parameters.Add(pCaseId);
@@ -154,7 +154,7 @@ LIMIT 1";
             if (hasContractNumber && !string.IsNullOrWhiteSpace(contractNumber))
             {
                 var pContractNumber = command.CreateParameter();
-                pContractNumber.ParameterName = "ContractNumber";
+                pContractNumber.ParameterName = "@ContractNumber";
                 pContractNumber.DbType = DbType.String;
                 pContractNumber.Value = contractNumber;
                 command.Parameters.Add(pContractNumber);
@@ -190,18 +190,18 @@ LIMIT 1";
         command.CommandText = $@"
 SELECT COLUMN_NAME
 FROM {db}.INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = :Schema
-  AND TABLE_NAME = :Table";
+WHERE TABLE_SCHEMA = @Schema
+  AND TABLE_NAME = @Table";
         command.CommandType = CommandType.Text;
 
         var pSchema = command.CreateParameter();
-        pSchema.ParameterName = "Schema";
+        pSchema.ParameterName = "@Schema";
         pSchema.DbType = DbType.String;
         pSchema.Value = schema;
         command.Parameters.Add(pSchema);
 
         var pTable = command.CreateParameter();
-        pTable.ParameterName = "Table";
+        pTable.ParameterName = "@Table";
         pTable.DbType = DbType.String;
         pTable.Value = table;
         command.Parameters.Add(pTable);
@@ -239,13 +239,13 @@ WHERE TABLE_SCHEMA = :Schema
 SELECT
     C.CASE_ID AS CaseId
 FROM {db}.{schema}.FIFTYONECLUB_CASE C
-WHERE C.CASE_ID = :CaseId
+WHERE C.CASE_ID = @CaseId
   AND C.CASE_ENDDATE = '9999-12-31'::DATE
 LIMIT 1";
             command.CommandType = CommandType.Text;
 
             var p = command.CreateParameter();
-            p.ParameterName = "CaseId";
+            p.ParameterName = "@CaseId";
             p.DbType = DbType.String;
             p.Value = caseId;
             command.Parameters.Add(p);
