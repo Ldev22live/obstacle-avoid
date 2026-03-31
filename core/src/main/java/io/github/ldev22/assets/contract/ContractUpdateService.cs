@@ -139,14 +139,14 @@ public class ContractUpdateService : IContractUpdateService
             command.CommandText = $@"
 SELECT {idColumn}
 FROM {db}.{schema}.FIFTYONECLUB_CONTRACTDETAIL
-WHERE CD_CASE_ID = @CaseId
+WHERE CD_CASE_ID = ?
   AND CD_ENDDATE = '9999-12-31'::DATE
-{(hasContractNumber && !string.IsNullOrWhiteSpace(contractNumber) ? "  AND CD_CONTRACTNUMBER = @ContractNumber\n" : string.Empty)}
+{(hasContractNumber && !string.IsNullOrWhiteSpace(contractNumber) ? "  AND CD_CONTRACTNUMBER = ?\n" : string.Empty)}
 LIMIT 1";
             command.CommandType = CommandType.Text;
 
             var pCaseId = command.CreateParameter();
-            pCaseId.ParameterName = "@CaseId";
+            pCaseId.ParameterName = "CaseId";
             pCaseId.DbType = DbType.String;
             pCaseId.Value = caseId;
             command.Parameters.Add(pCaseId);
@@ -154,7 +154,7 @@ LIMIT 1";
             if (hasContractNumber && !string.IsNullOrWhiteSpace(contractNumber))
             {
                 var pContractNumber = command.CreateParameter();
-                pContractNumber.ParameterName = "@ContractNumber";
+                pContractNumber.ParameterName = "ContractNumber";
                 pContractNumber.DbType = DbType.String;
                 pContractNumber.Value = contractNumber;
                 command.Parameters.Add(pContractNumber);
@@ -190,18 +190,18 @@ LIMIT 1";
         command.CommandText = $@"
 SELECT COLUMN_NAME
 FROM {db}.INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = @Schema
-  AND TABLE_NAME = @Table";
+WHERE TABLE_SCHEMA = ?
+  AND TABLE_NAME = ?";
         command.CommandType = CommandType.Text;
 
         var pSchema = command.CreateParameter();
-        pSchema.ParameterName = "@Schema";
+        pSchema.ParameterName = "Schema";
         pSchema.DbType = DbType.String;
         pSchema.Value = schema;
         command.Parameters.Add(pSchema);
 
         var pTable = command.CreateParameter();
-        pTable.ParameterName = "@Table";
+        pTable.ParameterName = "Table";
         pTable.DbType = DbType.String;
         pTable.Value = table;
         command.Parameters.Add(pTable);
@@ -239,13 +239,13 @@ WHERE TABLE_SCHEMA = @Schema
 SELECT
     C.CASE_ID AS CaseId
 FROM {db}.{schema}.FIFTYONECLUB_CASE C
-WHERE C.CASE_ID = @CaseId
+WHERE C.CASE_ID = ?
   AND C.CASE_ENDDATE = '9999-12-31'::DATE
 LIMIT 1";
             command.CommandType = CommandType.Text;
 
             var p = command.CreateParameter();
-            p.ParameterName = "@CaseId";
+            p.ParameterName = "CaseId";
             p.DbType = DbType.String;
             p.Value = caseId;
             command.Parameters.Add(p);
@@ -277,9 +277,3 @@ LIMIT 1";
     Task<ResponseData> IContractUpdateService.UpdateContract(RequestData input) => UpdateContract(input);
 }
 
-INFO: Executing stored procedure: dev_source.CLUB51.CREATEUPDATE_CASE
-WARN: Case verification query failed for caseId '5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc': Error: SQL compilation error:
-syntax error line 5 at position 18 unexpected '@CaseId'. SqlState: 42000, VendorCode: 1003, QueryId: 01c36543-0309-b420-0001-ed421876799e
-INFO: UpdateContract completed via stored procedure. Response: {"data":{"newContractDetailId":"Case Failed: ResultSet is empty or not prepared (call next() first)."},"isValid":true,"statusCode":200,"messages":[],"errors":[]}
-INFO: Response received: {"data":{"newContractDetailId":"Case Failed: ResultSet is empty or not prepared (call next() first)."},"isValid":true,"statusCode":200,"messages":[],"errors":[]}
-INFO: FunctionHandler execution completed.
