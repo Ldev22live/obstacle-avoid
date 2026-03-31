@@ -277,3 +277,8 @@ LIMIT 1";
     Task<ResponseData> IContractUpdateService.UpdateContract(RequestData input) => UpdateContract(input);
 }
 
+WARN: Case verification query failed for caseId '5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc': Error: SQL compilation error: error line 5 at position 18
+Bind variable ? not set. SqlState: 42601, VendorCode: 2049, QueryId: 01c3654a-0309-b424-0001-ed421876ba6a
+INFO: UpdateContract completed via stored procedure. Response: {"data":{"newContractDetailId":"Case Failed: ResultSet is empty or not prepared (call next() first)."},"isValid":true,"statusCode":200,"messages":[],"errors":[]}
+INFO: Response received: {"data":{"newContractDetailId":"Case Failed: ResultSet is empty or not prepared (call next() first)."},"isValid":true,"statusCode":200,"messages":[],"errors":[]}
+INFO: FunctionHandler execution completed.
