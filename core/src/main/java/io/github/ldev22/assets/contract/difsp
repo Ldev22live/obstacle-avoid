@@ -1,0 +1,162 @@
+CREATE OR REPLACE PROCEDURE SOURCE.CLUB51.CREATEUPDATE_CONTRACTDETAILS("CASEID" VARCHAR, "DAECD" VARCHAR)
+RETURNS VARCHAR
+LANGUAGE JAVASCRIPT
+COMMENT='SP to insert a 51club contractdetails from the DAE frontend'
+EXECUTE AS OWNER
+AS '
+    var DoSCD = 0; //manage slowly changing dimension if there is an update
+ // Inline debug logging
+
+    try {
+        //var s = "SELECT TO_VARCHAR(c) from SOURCE.CLUB51.DAECASE";
+        //var s = "SELECT TO_VARCHAR(c) from SOURCE.CLUB51.DAECASE where INSERTDATE=''2025-07-09 14:45:39.254''::TIMESTAMP_NTZ";
+        //var stmt = snowflake.createStatement( {sqlText: s} );
+        //var rs = stmt.execute();
+        //rs.next();
+        //var DAECASE = rs.getColumnValue(1);
+
+        // If Success check CASE_ID for insert or update action
+        var sql_command = "WITH x AS (SELECT parse_json(''" + DAECD + "''::variant) as str) ";
+        sql_command += "SELECT str:caseId::string as CASE_ID, \\
+            cd.value:commAllowance::string as COMMALLOWANCE, \\
+            cd.value:contractNumber::string as CONTRACTNUMBER, \\
+            cd.value:createdBy::string as CREATEDBY, \\
+            cd.value:createdOn::string as CREATEDON, \\
+            cd.value:fpFee::string as FPFEE, \\
+            cd.value:investAmount::string as INVESTAMOUNT, \\
+            cd.value:investType::string as INVESTTYPE, \\
+            cd.value:modifiedBy::string as MODIFIEDBY, \\
+            cd.value:modifiedOn::string as MODIFIEDON, \\
+            cd.value:negCommAllowance::string as NEGCOMMALLOWANCE, \\
+            cd.value:negCommPercentage::string as NEGCOMMPERCENTAGE, \\
+            cd.value:contractDetailId::string as CONTRACTDETAILID, \\
+            cd.value:payFrequency::string as PAYFREQUENCY, \\
+            cd.value:payMethod::string as PAYMETHOD, \\
+            cd.value:productName::string as PRODUCTNAME \\
+            FROM x, \\
+            LATERAL FLATTEN(input=>str:detail.contractDetails) cd;";
+        //return sql_command;
+
+        var stmt = snowflake.createStatement( {sqlText: sql_command} );
+        var rs = stmt.execute();
+
+        var caseno,commAllowance,contractNumber,createdBy,createdOn,fpFee,investAmount,investType;
+        var modifiedBy,modifiedOn,negCommAllowance,negCommPercentage,ContractDetailId;
+        var payFrequencyid,payMethodid,productid;
+
+        var rs1,rs2,rs3;
+        // var i=1;
+        while (rs.next())
+            {
+            caseno = rs.getColumnValue("CASE_ID");
+            commAllowance=(rs.getColumnValue("COMMALLOWANCE") == null) ? 0 : rs.getColumnValue("COMMALLOWANCE");
+            contractNumber=(rs.getColumnValue("CONTRACTNUMBER") == null) ? '''' : rs.getColumnValue("CONTRACTNUMBER");
+            createdBy=(rs.getColumnValue("CREATEDBY") == null) ? '''' : rs.getColumnValue("CREATEDBY");
+            createdOn=(rs.getColumnValue("CREATEDON") == null) ? '''' : rs.getColumnValue("CREATEDON");
+            fpFee=(rs.getColumnValue("FPFEE") == null) ? 0 : rs.getColumnValue("FPFEE");
+            investAmount=(rs.getColumnValue("INVESTAMOUNT") == null) ? 0 : rs.getColumnValue("INVESTAMOUNT");
+            investType=(rs.getColumnValue("INVESTTYPE") == null) ? '''' : rs.getColumnValue("INVESTTYPE");
+            modifiedBy=(rs.getColumnValue("MODIFIEDBY") == null) ? '''' : rs.getColumnValue("MODIFIEDBY");
+            modifiedOn=(rs.getColumnValue("MODIFIEDON") == null) ? '''' : rs.getColumnValue("MODIFIEDON");
+            negCommAllowance=(rs.getColumnValue("NEGCOMMALLOWANCE") == null) ? 0 : rs.getColumnValue("NEGCOMMALLOWANCE");
+            negCommPercentage=(rs.getColumnValue("NEGCOMMPERCENTAGE") == null) ? 0 : rs.getColumnValue("NEGCOMMPERCENTAGE");
+            ContractDetailId=(rs.getColumnValue("CONTRACTDETAILID") == null) ? 0 : rs.getColumnValue("CONTRACTDETAILID");
+
+            rs1 = snowflake.createStatement(
+                {
+                sqlText: `CALL SOURCE.CLUB51.GETREFDATA(?,?,?,?,?)`,
+                binds:[''SOURCE.CLUB51.FIFTYONECLUB_PAYFREQUENCY'', ''PF_ID'', ''PF_DESC'', rs.getColumnValue(''PAYFREQUENCY''), '''']
+                }
+            ).execute();
+
+            rs1.next();
+            payFrequencyid = (rs1.getColumnValue(1) == null) ? '''' : rs1.getColumnValue(1);
+
+            rs2 = snowflake.createStatement(
+                {
+                sqlText: `CALL SOURCE.CLUB51.GETREFDATA(?,?,?,?,?)`,
+                binds:[''SOURCE.CLUB51.FIFTYONECLUB_PAYMETHOD'', ''PM_ID'', ''PM_DESC'', rs.getColumnValue(''PAYMETHOD''), '''']
+                }
+            ).execute();
+
+            rs2.next();
+            payMethodid = (rs2.getColumnValue(1) == null) ? '''' : rs2.getColumnValue(1);
+
+            var productName =(rs.getColumnValue(''PRODUCTNAME'') == null) ? '''' : rs.getColumnValue(''PRODUCTNAME'');
+            var prodsql = "SELECT PRODUCT_ID FROM SOURCE.CLUB51.PRODUCT WHERE PRODUCT_STATUS=''Active'' AND PRODUCT_NAME=''" + productName + "'';";
+            rs3 = snowflake.createStatement( {sqlText: prodsql} ).execute();
+            rs3.next();
+            productid = (rs3.getColumnValue(1) == null) ? '''' : rs3.getColumnValue(1);
+
+            //rs3 = snowflake.createStatement(
+            //    {
+            //    sqlText: `CALL SOURCE.CLUB51.GETREFDATA(?,?,?,?,?)`,
+            //    binds:[''SOURCE.CLUB51.PRODUCT'', ''PRODUCT_ID'', ''PRODUCT_NAME'', rs.getColumnValue(''PRODUCTNAME''), '''']
+            //    }
+            //).execute();
+
+            // Check if it is an existing (caseno != 0), if not insert Case into source table SOURCE.CLUB51.FIFTYONECLUB_CONTRACTDETAIL
+            // Else compare and do SCD2 if different (Close record EndDate = CurrentDate and insert new record)
+            if (caseno != "0")
+                {
+                var sqlcheck = "SELECT HASH_AGG(CD_ID,CD_CONTRACTNUMBER,CD_PRODUCT_ID,CD_INVESTTYPE, \\
+                    CD_INVESTAMOUNT,CD_PF_ID,CD_PM_ID,CD_COMMALLOWANCE,CD_FPFEE,CD_NEGCOMMALLOWANCE, \\
+                    CD_NEGCOMMPERCENTAGE,CD_CREATEDBY,CD_MODIFIEDBY) \\
+                FROM SOURCE.CLUB51.FIFTYONECLUB_CONTRACTDETAIL WHERE CD_ENDDATE = ''9999-12-31''::DATE \\
+                    AND CD_CASE_ID=''" + caseno + "'' AND CD_ID=''" + ContractDetailId + "''";
+                rs3 = snowflake.createStatement( {sqlText: sqlcheck} ).execute();
+                rs3.next();
+                var cdhash = rs3.getColumnValue(1);
+
+                sqlcheck = "";
+                sqlcheck = "SELECT HASH_AGG(''" + ContractDetailId + "'',''" + contractNumber + "''," + productid + ",''" + investType + "''";
+                sqlcheck += "," + investAmount + "," + payFrequencyid + "," + payMethodid + "," + commAllowance + "," + fpFee;
+                sqlcheck += "," + negCommAllowance + "," + negCommPercentage + ",''" + createdBy + "'',''" + modifiedBy + "'') AS VAL;";
+
+                rs3 = snowflake.createStatement( {sqlText: sqlcheck} ).execute();
+                rs3.next();
+                var newhash = rs3.getColumnValue(1);
+
+                // if(i == 2)
+                //    {
+                //    return "HASH " + cdhash + " NEWHASH " + newhash;
+                //    }
+                // i += 1;
+
+                if(cdhash != newhash && cdhash != 0)
+                    {
+                    sqlcheck = "UPDATE SOURCE.CLUB51.FIFTYONECLUB_CONTRACTDETAIL SET CD_ENDDATE=CURRENT_DATE() WHERE \\
+                    CD_ENDDATE=''9999-12-31''::DATE AND CD_CASE_ID=''" + caseno + "'' AND CD_ID=''" + ContractDetailId + "''";
+                    snowflake.createStatement( {sqlText: sqlcheck} ).execute();
+                    DoSCD = 1;
+                    }
+                else
+                    DoSCD = 0;
+                }
+
+            if (caseno == "0" || DoSCD == 1 || cdhash == 0)
+                {
+                //return ''New Record'';
+                // New ContractDetail = insert new record into SOURCE.CLUB51.FIFTYONECLUB_CONTRACTDETAIL
+                sql = "INSERT INTO SOURCE.CLUB51.FIFTYONECLUB_CONTRACTDETAIL(CD_CASE_ID, \\
+                            CD_CONTRACTNUMBER,CD_PRODUCT_ID,CD_INVESTTYPE,CD_INVESTAMOUNT,CD_PF_ID, \\
+                            CD_PM_ID,CD_COMMALLOWANCE,CD_FPFEE,CD_NEGCOMMALLOWANCE,CD_NEGCOMMPERCENTAGE, \\
+                            CD_CREATEDBY,CD_CREATEDON,CD_MODIFIEDBY,CD_MODIFIED) \\
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                stmt = snowflake.createStatement(
+                    {
+                    sqlText: sql,
+
+                    binds: [CASEID,contractNumber,productid,investType,investAmount,payFrequencyid,payMethodid,
+                    commAllowance,fpFee,negCommAllowance,negCommPercentage,createdBy,createdOn,modifiedBy,modifiedOn]
+                    });
+                stmt.execute();
+                }
+            }
+        }
+    catch (err)  {
+        return "ContractDetail Failed: " + err;   // Return a success/error indicator.
+        }
+
+    return "1";
+';
