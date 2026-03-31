@@ -276,3 +276,10 @@ LIMIT 1";
 
     Task<ResponseData> IContractUpdateService.UpdateContract(RequestData input) => UpdateContract(input);
 }
+
+INFO: Executing stored procedure: dev_source.CLUB51.CREATEUPDATE_CASE
+WARN: Case verification query failed for caseId '5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc': Error: SQL compilation error:
+syntax error line 5 at position 18 unexpected '@CaseId'. SqlState: 42000, VendorCode: 1003, QueryId: 01c36543-0309-b420-0001-ed421876799e
+INFO: UpdateContract completed via stored procedure. Response: {"data":{"newContractDetailId":"Case Failed: ResultSet is empty or not prepared (call next() first)."},"isValid":true,"statusCode":200,"messages":[],"errors":[]}
+INFO: Response received: {"data":{"newContractDetailId":"Case Failed: ResultSet is empty or not prepared (call next() first)."},"isValid":true,"statusCode":200,"messages":[],"errors":[]}
+INFO: FunctionHandler execution completed.
