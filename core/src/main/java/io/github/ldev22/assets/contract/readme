@@ -1,0 +1,41 @@
+Editing Contract Details, after clicking on Save an undefined Contract Details details record is returned.
+
+
+
+Key details
+Description
+
+When editing Contract Details, after clicking on Save an undefined Contract Details details record is returned.
+
+To resolve item 7. Medium priority: When editing Contract Details, after clicking on Save does not refresh immeidately an undefined Contract Details details record is returned. Jira: FOC-54 tested and passed in Blue / / / FOC-567 is in play too not show stopper
+
+
+
+Root cause: OC uses contract detail business key to identify which contract in case detail to resolve bug FOC-567. But the business key was changed after user updated contract detail data, and frontend was used old business key to refresh data.
+
+
+Solution 2: (Good)
+
+OM: Alex Benning Lorean De Vries Provide new API to update contract detail and return new contract business key which use to refresh data in Contract Detail page.
+
+OC: we will implement this API.
+
+
+
+Props: It can resolve the cause at root.
+
+Cons: Take more effort.
+
+
+
+Root cause description
+
+OC uses contract detail business key to identify which contract in case detail to resolve bug FOC-567. But the business key was changed after user updated contract detail data, and frontend was used old business key to refresh data.
+
+Acceptance Criteria
+
+CONTRACT DETAILS:
+
+Given that I have updated values on Contract Details
+
+·       The updated values should be shown on the Contract Details view on Case Details
