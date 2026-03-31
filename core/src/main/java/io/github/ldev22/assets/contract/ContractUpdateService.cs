@@ -60,22 +60,43 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
 
                 // Sync ExecuteReader like CaseService
                 using var reader = command.ExecuteReader();
-                string? procResult = null;
+                string? spResult = null;
 
                 while (reader.Read())
                 {
-                    procResult = reader[0]?.ToString();
-                    LambdaLogger.Log($"INFO: SP returned: {procResult}");
+                    spResult = reader[0]?.ToString();
+                    LambdaLogger.Log($"INFO: SP returned: {spResult}");
                 }
 
-                if (string.IsNullOrWhiteSpace(procResult))
+                if (string.IsNullOrWhiteSpace(spResult) || spResult.StartsWith("ContractDetail Failed"))
                 {
-                    throw new InvalidOperationException("No ID returned from stored procedure.");
+                    throw new InvalidOperationException($"SP failed: {spResult}");
+                }
+
+                // Query for the new contract detail ID (latest active record for this case)
+                string newContractDetailId;
+                using (var idCommand = connection.CreateCommand())
+                {
+                    idCommand.CommandText = $@"SELECT CD_ID FROM {db}.{schema}.FIFTYONECLUB_CONTRACTDETAIL WHERE CD_CASE_ID = '{input.CaseId}' AND CD_ENDDATE = '9999-12-31'::DATE";
+                    idCommand.CommandType = CommandType.Text;
+
+                    LambdaLogger.Log($"INFO: Querying for new CD_ID: {idCommand.CommandText}");
+
+                    using var idReader = idCommand.ExecuteReader();
+                    if (idReader.Read())
+                    {
+                        newContractDetailId = idReader[0]?.ToString() ?? throw new InvalidOperationException("CD_ID is null");
+                        LambdaLogger.Log($"INFO: New contract detail ID: {newContractDetailId}");
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Could not find new contract detail record after update.");
+                    }
                 }
 
                 return new ResponseData
                 {
-                    data = new Data { newContractDetailId = procResult },
+                    data = new Data { newContractDetailId = newContractDetailId },
                     IsValid = true,
                     StatusCode = 200
                 };
