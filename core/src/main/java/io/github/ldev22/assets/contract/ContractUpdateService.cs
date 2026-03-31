@@ -44,8 +44,6 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
         {
             LambdaLogger.Log($"INFO: UpdateContract called with input: {JsonConvert.SerializeObject(input)}");
 
-            var response = new ResponseData();
-
             try
             {
                 using var connection = _connectionFactory.CreateConnection();
@@ -57,58 +55,89 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                     WriteIndented = true
                 };
 
-                var json = System.Text.Json.JsonSerializer.Serialize(input, options);
+                // Transform input to SP expected format like CaseService does with EventModel
+                var eventPayload = CreateEventPayload(input);
+                var json = System.Text.Json.JsonSerializer.Serialize(eventPayload, options);
                 var escaped = "'" + json.Replace("'", "''") + "'";
 
                 var db = _dbConfig.DbEdrDb;
                 var schema = _dbConfig.DbEdrSchemaClun51;
-                var procName = Environment.GetEnvironmentVariable("CONTRACTDETAIL_PROC") ?? "CREATEUPDATE_CASE";
+                var procName = Environment.GetEnvironmentVariable("CONTRACTDETAIL_PROC") ?? "CREATEUPDATE_CONTRACTDETAILS";
+
+                // Create payload for DAECD parameter - expects detail.contractDetails array
+                var contractPayload = CreateContractPayload(input);
+                var json = System.Text.Json.JsonSerializer.Serialize(contractPayload, options);
+                var escapedJson = "'" + json.Replace("'", "''") + "'";
+                var caseIdParam = "'" + (input.CaseId ?? "0").Replace("'", "''") + "'";
 
                 using var command = connection.CreateCommand();
-                command.CommandText = $"CALL {db}.{schema}.{procName}({escaped})";
+                command.CommandText = $"CALL {db}.{schema}.{procName}({caseIdParam}, {escapedJson})";
                 command.CommandType = CommandType.Text;
 
-                LambdaLogger.Log($"INFO: Executing stored procedure: {db}.{schema}.{procName}");
+                LambdaLogger.Log($"INFO: Executing: {command.CommandText}");
 
-                // Use sync ExecuteReader like CaseService (Snowflake driver works better sync)
+                // Sync ExecuteReader like CaseService
                 using var reader = command.ExecuteReader();
                 string? procResult = null;
 
                 while (reader.Read())
                 {
                     procResult = reader[0]?.ToString();
+                    LambdaLogger.Log($"INFO: SP returned: {procResult}");
                 }
 
                 if (string.IsNullOrWhiteSpace(procResult))
                 {
-                    throw new InvalidOperationException("No ID returned from the stored procedure.");
+                    throw new InvalidOperationException("No ID returned from stored procedure.");
                 }
 
-                // Return the stored procedure result as the new contract detail ID
-                response.data = new Data
+                return new ResponseData
                 {
-                    newContractDetailId = procResult,
+                    data = new Data { newContractDetailId = procResult },
+                    IsValid = true,
+                    StatusCode = 200
                 };
-                response.IsValid = true;
-                response.StatusCode = 200;
-
-                LambdaLogger.Log($"INFO: UpdateContract completed. NewContractDetailId: {procResult}");
-                return response;
             }
             catch (Exception ex)
             {
                 var errorEx = ex.InnerException ?? ex;
-                LambdaLogger.Log($"ERROR: UpdateContract failed. Error: {errorEx.Message}");
+                LambdaLogger.Log($"ERROR: UpdateContract failed: {errorEx.Message}");
                 throw;
             }
+        }
+
+        private object CreateContractPayload(RequestData input)
+        {
+            return new
+            {
+                caseId = input.CaseId ?? "0",
+                detail = new
+                {
+                    contractDetails = new[]
+                    {
+                        new
+                        {
+                            contractDetailId = input.ContactDetail?.ContractDetailId,
+                            contractNumber = input.ContactDetail?.ContractNumber,
+                            productName = input.ContactDetail?.ProductName,
+                            investType = input.ContactDetail?.InvestType,
+                            investAmount = input.ContactDetail?.InvestAmount,
+                            payFrequency = (string?)null,
+                            payMethod = input.ContactDetail?.PayMethod,
+                            commAllowance = input.ContactDetail?.CommAllowance,
+                            fpFee = input.ContactDetail?.FpFee,
+                            negCommAllowance = input.ContactDetail?.NegCommAllowance,
+                            negCommPercentage = input.ContactDetail?.NegCommPercentage,
+                            createdBy = input.ContactDetail?.CreatedBy,
+                            createdOn = input.ContactDetail?.CreatedOn,
+                            modifiedBy = input.ContactDetail?.ModifiedBy,
+                            modifiedOn = input.ContactDetail?.ModifiedOn
+                        }
+                    }
+                }
+            };
         }
 
         Task<ResponseData> IContractUpdateService.UpdateContract(RequestData input) => UpdateContract(input);
     }
 }
-INFO: Using connection string: account = pg70172; user = SRV_DAE_TECH; password = ******; scheme = https; host = pg70172.eu - west - 1.snowflakecomputing.com; port = 443; db = dev_source; schema = CLUB51; insecureMode = true
-INFO: SnowflakeDbConnection instance created successfully.
-INFO: Executing stored procedure: dev_source.CLUB51.CREATEUPDATE_CASE
-INFO: UpdateContract completed. NewContractDetailId: Case Failed: ResultSet is empty or not prepared(call next() first).
-INFO: Response received: { "data":{ "newContractDetailId":"Case Failed: ResultSet is empty or not prepared (call next() first)."},"isValid":true,"statusCode":200,"messages":[],"errors":[]}
-INFO: FunctionHandler execution completed.
