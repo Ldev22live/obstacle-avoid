@@ -186,6 +186,7 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                           AND (CD.CD_ENDDATE IS NULL OR CD.CD_ENDDATE = '9999-12-31')
                           AND CD.CD_ISDELETED = 0
 2026-04-01T18:14:16.260Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: New contract detail ID: c767dc4b-7f71-40af-a565-9caf6ebcf3b1
+
 2026-04-01T18:14:16.260Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: Response received:
 {
     "data": {
