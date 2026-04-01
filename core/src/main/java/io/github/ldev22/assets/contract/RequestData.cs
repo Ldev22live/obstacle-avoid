@@ -21,6 +21,7 @@ namespace Ade.Club51.Lambda.Contract.Update.Models
         public string InvestType { get; set; }
         public string InvestAmount { get; set; }
         public string PayMethod { get; set; }
+        public string PayFrequency { get; set; }
         public string CommAllowance { get; set; }
         public string FpFee { get; set; }
         public string NegCommAllowance { get; set; }

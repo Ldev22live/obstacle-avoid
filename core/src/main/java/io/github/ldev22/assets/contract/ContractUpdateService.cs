@@ -131,7 +131,7 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                             productName = input.ContactDetail?.ProductName,
                             investType = input.ContactDetail?.InvestType,
                             investAmount = input.ContactDetail?.InvestAmount,
-                            payFrequency = (string?)null,
+                            payFrequency = input.ContactDetail?.PayFrequency,
                             payMethod = input.ContactDetail?.PayMethod,
                             commAllowance = input.ContactDetail?.CommAllowance,
                             fpFee = input.ContactDetail?.FpFee,
