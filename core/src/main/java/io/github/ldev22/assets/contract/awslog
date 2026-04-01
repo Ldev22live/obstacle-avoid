@@ -1,0 +1,28 @@
+2026-04-01T06:26:55.835Z
+2026-04-01T06:26:55.835Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: UpdateContract called with input: {"CaseId":"5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc","ContactDetail":{"ContractDetailId":"ecbe2bc9-5c6d-469d-be07-02893dca4938","ContractNumber":"19604880","ProductName":"Orion - SP","InvestType":"Single Premium","InvestAmount":"23.00","PayMethod":"Debit Order","CommAllowance":"100.00","FpFee":"222.00","NegCommAllowance":"100.00","NegCommPercentage":"100.00","CreatedBy":"OneConnectBA","CreatedOn":"2026-03-23T03:33:35.601","ModifiedBy":"OneConnectBA","ModifiedOn":"2026-03-23T11:26:00.21"}}
+2026-04-01T06:26:55.835Z
+2026-04-01T06:26:55.835Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: Creating Snowflake database connection.
+2026-04-01T06:26:55.835Z
+2026-04-01T06:26:55.835Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: Generating Snowflake connection string.
+2026-04-01T06:26:55.835Z
+2026-04-01T06:26:55.835Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: Connection string generated successfully. Masking sensitive details for logs.
+2026-04-01T06:26:55.835Z
+2026-04-01T06:26:55.835Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: Using connection string: account=pg70172;user=SRV_DAE_TECH;password=******;scheme=https;host=pg70172.eu-west-1.snowflakecomputing.com;port=443;db=DEV_SOURCE;schema=CLUB51;insecureMode=true
+2026-04-01T06:26:55.835Z
+2026-04-01T06:26:55.835Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: SnowflakeDbConnection instance created successfully.
+2026-04-01T06:26:55.855Z
+2026-04-01T06:26:55.855Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: Executing: CALL DEV_SOURCE.CLUB51.CREATEUPDATE_CONTRACTDETAILS('5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc', '{ "caseId": "5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc", "detail": { "contractDetails": [ { "contractDetailId": "ecbe2bc9-5c6d-469d-be07-02893dca4938", "contractNumber": "19604880", "productName": "Orion - SP", "investType": "Single Premium", "investAmount": "23.00", "payFrequency": null, "payMethod": "Debit Order", "commAllowance": "100.00", "fpFee": "222.00", "negCommAllowance": "100.00", "negCommPercentage": "100.00", "createdBy": "OneConnectBA", "createdOn": "2026-03-23T03:33:35.601", "modifiedBy": "OneConnectBA", "modifiedOn": "2026-03-23T11:26:00.21" } ] } }')
+2026-04-01T06:26:57.415Z
+2026-04-01T06:26:57.415Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: SP returned: 1
+2026-04-01T06:26:57.416Z
+2026-04-01T06:26:57.416Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: Querying for new CD_ID: SELECT CD_ID FROM DEV_SOURCE.CLUB51.FIFTYONECLUB_CONTRACTDETAIL WHERE CD_CASE_ID = '5cc85ce26524a1f98196b828009a1149652122c351bb8dd5397c1232e1140fcc' AND CD_ENDDATE = '9999-12-31'::DATE
+2026-04-01T06:26:57.588Z
+2026-04-01T06:26:57.588Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: New contract detail ID: 09bfa0f8-e969-4760-92b7-5f25a30e9029
+2026-04-01T06:26:57.588Z
+2026-04-01T06:26:57.588Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: Response received: {"data":{"newContractDetailId":"09bfa0f8-e969-4760-92b7-5f25a30e9029"},"isValid":true,"statusCode":200,"messages":[],"errors":[]}
+2026-04-01T06:26:57.588Z
+2026-04-01T06:26:57.588Z 390e6b5d-91c0-41fd-bdbc-731df8c890dd trce INFO: FunctionHandler execution completed.
+2026-04-01T06:26:57.591Z
+END RequestId: 390e6b5d-91c0-41fd-bdbc-731df8c890dd
+2026-04-01T06:26:57.591Z
+REPORT RequestId: 390e6b5d-91c0-41fd-bdbc-731df8c890dd Duration: 1771.02 ms Billed Duration: 1772 ms Memory Size: 512 MB Max Memory Used: 115 MB
