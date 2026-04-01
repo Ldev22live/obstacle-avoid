@@ -151,23 +151,48 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
     }
 }
 
+2026-04-01T18:14:14.421Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: Executing: CALL DEV_SOURCE.CLUB51.CREATEUPDATE_CONTRACTDETAILS('2061a13a6237e27f9387fb1d881d7578df72f03f37e40e20bdaf2924cd2195b4', '
 {
-    "CaseId": "2061a13a6237e27f9387fb1d881d7578df72f03f37e40e20bdaf2924cd2195b4",
-    "ContactDetail": {
-        "ContractDetailId": "8d583480-b4c6-4eea-82b3-b87937721454",
-        "ContractNumber": "PaulineCD1",
-        "ProductName": "Conventional - Recurring EXB",
-        "InvestType": "Recurring Premium",
-        "InvestAmount": "25222.00",
-        "PayMethod": "1",
-        "CommAllowance": "22.00",
-        "FpFee": "0.00",
-        "NegCommAllowance": "22.00",
-        "NegCommPercentage": "100.00",
-        "CreatedBy": "OMDAEsuper",
-        "CreatedOn": "2026-04-01T19:50:05.031",
-        "ModifiedBy": null,
-        "ModifiedOn": "0001-01-01T00:00:00",
-        "PayFrequency": null
+    "caseId": "2061a13a6237e27f9387fb1d881d7578df72f03f37e40e20bdaf2924cd2195b4",
+    "detail": {
+        "contractDetails": [
+            {
+                "contractDetailId": "d85e789c-cc36-4a10-b377-e283aa7955fd",
+                "contractNumber": "PaulineCD1",
+                "productName": "Conventional - Recurring EXB",
+                "investType": "Recurring Premium",
+                "investAmount": "75222.00",
+                "payFrequency": null,
+                "payMethod": "3",
+                "commAllowance": "22.00",
+                "fpFee": "0.00",
+                "negCommAllowance": "22.00",
+                "negCommPercentage": "100.00",
+                "createdBy": "OMDAEsuper",
+                "createdOn": "2026-04-01T20:14:12.273",
+                "modifiedBy": null,
+                "modifiedOn": "0001-01-01T00:00:00"
+            }
+        ]
     }
+}
+')
+2026-04-01T18:14:15.935Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: SP returned: 1
+2026-04-01T18:14:15.935Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: Querying for new CD_ID:
+                        SELECT CD.CD_ID
+                        FROM DEV_SOURCE.CLUB51.FIFTYONECLUB_CONTRACTDETAIL CD
+                        WHERE CD.CD_CASE_ID = '2061a13a6237e27f9387fb1d881d7578df72f03f37e40e20bdaf2924cd2195b4'
+                          AND CD.CD_CONTRACTNUMBER = 'PaulineCD1'
+                          AND (CD.CD_ENDDATE IS NULL OR CD.CD_ENDDATE = '9999-12-31')
+                          AND CD.CD_ISDELETED = 0
+2026-04-01T18:14:16.260Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: New contract detail ID: c767dc4b-7f71-40af-a565-9caf6ebcf3b1
+2026-04-01T18:14:16.260Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: Response received:
+{
+    "data": {
+        "newContractDetailId": "c767dc4b-7f71-40af-a565-9caf6ebcf3b1"
+    },
+    "isValid": true,
+    "statusCode": 200,
+    "messages": [],
+    "errors": []
 }
