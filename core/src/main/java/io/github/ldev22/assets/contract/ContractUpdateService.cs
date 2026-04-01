@@ -73,7 +73,7 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                     throw new InvalidOperationException($"SP failed: {spResult}");
                 }
 
-                // Query for the new contract detail ID matching CaseQueries pattern
+                // Query for the new contract detail ID matching CaseQueries pattern - get most recent
                 string newContractDetailId;
                 using (var idCommand = connection.CreateCommand())
                 {
@@ -83,7 +83,9 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                         WHERE CD.CD_CASE_ID = '{input.CaseId}'
                           AND CD.CD_CONTRACTNUMBER = '{input.ContactDetail?.ContractNumber}'
                           AND (CD.CD_ENDDATE IS NULL OR CD.CD_ENDDATE = '9999-12-31')
-                          AND CD.CD_ISDELETED = 0";
+                          AND CD.CD_ISDELETED = 0
+                        ORDER BY CD.CD_MODIFIED DESC
+                        LIMIT 1";
                     idCommand.CommandType = CommandType.Text;
 
                     LambdaLogger.Log($"INFO: Querying for new CD_ID: {idCommand.CommandText}");
@@ -115,85 +117,39 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
             }
         }
 
-        private object CreateContractPayload(RequestData input)
+        private Dictionary<string, object> CreateContractPayload(RequestData input)
         {
-            return new
+            var contractDetail = new Dictionary<string, object?>();
+
+            if (input.ContactDetail != null)
             {
-                caseId = input.CaseId ?? "0",
-                detail = new
+                contractDetail["contractDetailId"] = input.ContactDetail.ContractDetailId;
+                contractDetail["contractNumber"] = input.ContactDetail.ContractNumber;
+                contractDetail["productName"] = input.ContactDetail.ProductName;
+                contractDetail["investType"] = input.ContactDetail.InvestType;
+                contractDetail["investAmount"] = input.ContactDetail.InvestAmount;
+                contractDetail["payFrequency"] = input.ContactDetail.PayFrequency;
+                contractDetail["payMethod"] = input.ContactDetail.PayMethod;
+                contractDetail["commAllowance"] = input.ContactDetail.CommAllowance;
+                contractDetail["fpFee"] = input.ContactDetail.FpFee;
+                contractDetail["negCommAllowance"] = input.ContactDetail.NegCommAllowance;
+                contractDetail["negCommPercentage"] = input.ContactDetail.NegCommPercentage;
+                contractDetail["createdBy"] = input.ContactDetail.CreatedBy;
+                contractDetail["createdOn"] = input.ContactDetail.CreatedOn;
+                contractDetail["modifiedBy"] = input.ContactDetail.ModifiedBy;
+                contractDetail["modifiedOn"] = input.ContactDetail.ModifiedOn;
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["caseId"] = input.CaseId ?? "0",
+                ["detail"] = new Dictionary<string, object>
                 {
-                    contractDetails = new[]
-                    {
-                        new
-                        {
-                            contractDetailId = input.ContactDetail?.ContractDetailId,
-                            contractNumber = input.ContactDetail?.ContractNumber,
-                            productName = input.ContactDetail?.ProductName,
-                            investType = input.ContactDetail?.InvestType,
-                            investAmount = input.ContactDetail?.InvestAmount,
-                            payFrequency = input.ContactDetail?.PayFrequency,
-                            payMethod = input.ContactDetail?.PayMethod,
-                            commAllowance = input.ContactDetail?.CommAllowance,
-                            fpFee = input.ContactDetail?.FpFee,
-                            negCommAllowance = input.ContactDetail?.NegCommAllowance,
-                            negCommPercentage = input.ContactDetail?.NegCommPercentage,
-                            createdBy = input.ContactDetail?.CreatedBy,
-                            createdOn = input.ContactDetail?.CreatedOn,
-                            modifiedBy = input.ContactDetail?.ModifiedBy,
-                            modifiedOn = input.ContactDetail?.ModifiedOn
-                        }
-                    }
+                    ["contractDetails"] = new[] { contractDetail }
                 }
             };
         }
 
         Task<ResponseData> IContractUpdateService.UpdateContract(RequestData input) => UpdateContract(input);
     }
-}
-
-2026-04-01T18:14:14.421Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: Executing: CALL DEV_SOURCE.CLUB51.CREATEUPDATE_CONTRACTDETAILS('2061a13a6237e27f9387fb1d881d7578df72f03f37e40e20bdaf2924cd2195b4', '
-{
-    "caseId": "2061a13a6237e27f9387fb1d881d7578df72f03f37e40e20bdaf2924cd2195b4",
-    "detail": {
-        "contractDetails": [
-            {
-                "contractDetailId": "d85e789c-cc36-4a10-b377-e283aa7955fd",
-                "contractNumber": "PaulineCD1",
-                "productName": "Conventional - Recurring EXB",
-                "investType": "Recurring Premium",
-                "investAmount": "75222.00",
-                "payFrequency": null,
-                "payMethod": "3",
-                "commAllowance": "22.00",
-                "fpFee": "0.00",
-                "negCommAllowance": "22.00",
-                "negCommPercentage": "100.00",
-                "createdBy": "OMDAEsuper",
-                "createdOn": "2026-04-01T20:14:12.273",
-                "modifiedBy": null,
-                "modifiedOn": "0001-01-01T00:00:00"
-            }
-        ]
-    }
-}
-')
-2026-04-01T18:14:15.935Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: SP returned: 1
-2026-04-01T18:14:15.935Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: Querying for new CD_ID:
-                        SELECT CD.CD_ID
-                        FROM DEV_SOURCE.CLUB51.FIFTYONECLUB_CONTRACTDETAIL CD
-                        WHERE CD.CD_CASE_ID = '2061a13a6237e27f9387fb1d881d7578df72f03f37e40e20bdaf2924cd2195b4'
-                          AND CD.CD_CONTRACTNUMBER = 'PaulineCD1'
-                          AND (CD.CD_ENDDATE IS NULL OR CD.CD_ENDDATE = '9999-12-31')
-                          AND CD.CD_ISDELETED = 0
-2026-04-01T18:14:16.260Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: New contract detail ID: c767dc4b-7f71-40af-a565-9caf6ebcf3b1
-
-2026-04-01T18:14:16.260Z	05f1dd01-6f2b-4981-ba0c-2ae254d8d6b1	trce	INFO: Response received:
-{
-    "data": {
-        "newContractDetailId": "c767dc4b-7f71-40af-a565-9caf6ebcf3b1"
-    },
-    "isValid": true,
-    "statusCode": 200,
-    "messages": [],
-    "errors": []
 }
