@@ -73,11 +73,17 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                     throw new InvalidOperationException($"SP failed: {spResult}");
                 }
 
-                // Query for the new contract detail ID (latest active record for this case)
+                // Query for the new contract detail ID matching CaseQueries pattern
                 string newContractDetailId;
                 using (var idCommand = connection.CreateCommand())
                 {
-                    idCommand.CommandText = $@"SELECT CD_ID FROM {db}.{schema}.FIFTYONECLUB_CONTRACTDETAIL WHERE CD_CASE_ID = '{input.CaseId}' AND CD_ENDDATE = '9999-12-31'::DATE";
+                    idCommand.CommandText = $@"
+                        SELECT CD.CD_ID 
+                        FROM {db}.{schema}.FIFTYONECLUB_CONTRACTDETAIL CD
+                        WHERE CD.CD_CASE_ID = '{input.CaseId}' 
+                          AND CD.CD_CONTRACTNUMBER = '{input.ContactDetail?.ContractNumber}'
+                          AND (CD.CD_ENDDATE IS NULL OR CD.CD_ENDDATE = '9999-12-31') 
+                          AND CD.CD_ISDELETED = 0";
                     idCommand.CommandType = CommandType.Text;
 
                     LambdaLogger.Log($"INFO: Querying for new CD_ID: {idCommand.CommandText}");
