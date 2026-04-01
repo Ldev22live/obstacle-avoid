@@ -78,11 +78,11 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                 using (var idCommand = connection.CreateCommand())
                 {
                     idCommand.CommandText = $@"
-                        SELECT CD.CD_ID 
+                        SELECT CD.CD_ID
                         FROM {db}.{schema}.FIFTYONECLUB_CONTRACTDETAIL CD
-                        WHERE CD.CD_CASE_ID = '{input.CaseId}' 
+                        WHERE CD.CD_CASE_ID = '{input.CaseId}'
                           AND CD.CD_CONTRACTNUMBER = '{input.ContactDetail?.ContractNumber}'
-                          AND (CD.CD_ENDDATE IS NULL OR CD.CD_ENDDATE = '9999-12-31') 
+                          AND (CD.CD_ENDDATE IS NULL OR CD.CD_ENDDATE = '9999-12-31')
                           AND CD.CD_ISDELETED = 0";
                     idCommand.CommandType = CommandType.Text;
 
@@ -151,3 +151,23 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
     }
 }
 
+{
+    "CaseId": "2061a13a6237e27f9387fb1d881d7578df72f03f37e40e20bdaf2924cd2195b4",
+    "ContactDetail": {
+        "ContractDetailId": "8d583480-b4c6-4eea-82b3-b87937721454",
+        "ContractNumber": "PaulineCD1",
+        "ProductName": "Conventional - Recurring EXB",
+        "InvestType": "Recurring Premium",
+        "InvestAmount": "25222.00",
+        "PayMethod": "1",
+        "CommAllowance": "22.00",
+        "FpFee": "0.00",
+        "NegCommAllowance": "22.00",
+        "NegCommPercentage": "100.00",
+        "CreatedBy": "OMDAEsuper",
+        "CreatedOn": "2026-04-01T19:50:05.031",
+        "ModifiedBy": null,
+        "ModifiedOn": "0001-01-01T00:00:00",
+        "PayFrequency": null
+    }
+}
