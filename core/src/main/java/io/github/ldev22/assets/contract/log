@@ -23,3 +23,29 @@ ERROR: UpdateContract failed: Submission SP failed: Submission Failed: Malformed
 ERROR: Exception occurred in _adviserService.GetAdviserDetails - Submission SP failed: Submission Failed: Malformed JSON payload | StackTrace:    at Ade.Club51.Lambda.Contract.Update.Services.ContractUpdateService.UpdateContract(RequestData input) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Services\ContractUpdateService.cs:line 93
    at Ade.Club51.Lambda.Contract.Update.Function.FunctionHandlerInternalAsync(RequestData input, ILambdaContext context) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Function.cs:line 133
 INFO: FunctionHandler execution completed.
+
+{
+  "submission": {
+    "caseCount": "-1.00",
+    "adviser": "Siphamandla Qhingeni",
+    "caseNumber": "3c2501ae95337d3b8b126cf70cb3c0e22e7f546d3adf0525dad648aa5da5efae",
+    "caseStatusId": "8",
+    "commAllowance": "1330.53",
+    "contractNumber": "114207071",
+    "createdBy": "BANCS PAS",
+    "figPercentage": "100",
+    "fpFee": "1.00",
+    "investmentAmount": "1236.00",
+    "modifiedBy": "OneConnectBA",
+    "negCommAllowance": "1330.53",
+    "new51ClubsubmissionId": "9cac3467-8bc7-4649-b7e2-138b6aa22c03",
+    "premiumId": "OMP-114207071",
+    "productCode": "OMP",
+    "productId": "100",
+    "productName": "OMP - Recurring",
+    "salesCode": "630568",
+    "splitCommissionId": "630568-114207071",
+    "statusReason": "Open",
+    "team": "Cheetah (AYMA)"
+  }
+}
