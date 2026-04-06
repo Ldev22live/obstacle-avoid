@@ -78,6 +78,14 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                 var submissionProcName = Environment.GetEnvironmentVariable("SUBMISSION_PROC") ?? "CREATEUPDATE_SUBMISSIONS";
                 var submissionPayload = CreateSubmissionPayload(input);
                 var submissionJson = System.Text.Json.JsonSerializer.Serialize(submissionPayload, options);
+
+                // Validate submission payload is not empty
+                if (string.IsNullOrWhiteSpace(submissionJson) || submissionJson == "{\"submission\":{}}")
+                {
+                    LambdaLogger.Log("ERROR: Submission payload is empty - ContactDetail data required");
+                    throw new InvalidOperationException("Submission payload is empty. ContactDetail with ContractDetailId is required.");
+                }
+
                 var escapedSubmissionJson = "'" + submissionJson.Replace("'", "''") + "'";
 
                 using (var submissionCommand = connection.CreateCommand())
@@ -182,29 +190,53 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
         {
             var submission = new Dictionary<string, object?>();
 
+            // Map ContactDetail fields to Submission fields where they align
+            if (input.ContactDetail != null)
+            {
+                submission["new51ClubsubmissionId"] = input.ContactDetail.ContractDetailId;
+                submission["contractNumber"] = input.ContactDetail.ContractNumber;
+                submission["productName"] = input.ContactDetail.ProductName;
+                submission["commAllowance"] = input.ContactDetail.CommAllowance;
+                submission["fpFee"] = input.ContactDetail.FpFee;
+                submission["negCommAllowance"] = input.ContactDetail.NegCommAllowance;
+                submission["createdBy"] = input.ContactDetail.CreatedBy;
+                submission["modifiedBy"] = input.ContactDetail.ModifiedBy;
+            }
+
+            // Use CaseId as caseNumber if Submission data not provided
+            submission["caseNumber"] = input.CaseId ?? "0";
+
+            // Use input.Submission for additional fields if available
             if (input.Submission != null)
             {
-                submission["caseCount"] = input.Submission.CaseCount;
-                submission["adviser"] = input.Submission.Adviser;
-                submission["caseNumber"] = input.Submission.CaseNumber;
-                submission["caseStatusId"] = input.Submission.CaseStatusId;
-                submission["commAllowance"] = input.Submission.CommAllowance;
-                submission["contractNumber"] = input.Submission.ContractNumber;
-                submission["createdBy"] = input.Submission.CreatedBy;
-                submission["figPercentage"] = input.Submission.FigPercentage;
-                submission["fpFee"] = input.Submission.FpFee;
-                submission["investmentAmount"] = input.Submission.InvestmentAmount;
-                submission["modifiedBy"] = input.Submission.ModifiedBy;
-                submission["negCommAllowance"] = input.Submission.NegCommAllowance;
-                submission["new51ClubsubmissionId"] = input.Submission.New51ClubsubmissionId;
-                submission["premiumId"] = input.Submission.PremiumId;
-                submission["productCode"] = input.Submission.ProductCode;
-                submission["productId"] = input.Submission.ProductId;
-                submission["productName"] = input.Submission.ProductName;
-                submission["salesCode"] = input.Submission.SalesCode;
-                submission["splitCommissionId"] = input.Submission.SplitCommissionId;
-                submission["statusReason"] = input.Submission.StatusReason;
-                submission["team"] = input.Submission.Team;
+                submission["caseCount"] = input.Submission.CaseCount ?? "-1.00";
+                submission["adviser"] = input.Submission.Adviser ?? "";
+                submission["caseStatusId"] = input.Submission.CaseStatusId ?? "8";
+                submission["figPercentage"] = input.Submission.FigPercentage ?? "100";
+                submission["investmentAmount"] = input.Submission.InvestmentAmount ?? input.ContactDetail?.InvestAmount ?? "0";
+                submission["premiumId"] = input.Submission.PremiumId ?? $"OMP-{input.ContactDetail?.ContractNumber}";
+                submission["productCode"] = input.Submission.ProductCode ?? "OMP";
+                submission["productId"] = input.Submission.ProductId ?? "100";
+                submission["salesCode"] = input.Submission.SalesCode ?? "630568";
+                submission["splitCommissionId"] = input.Submission.SplitCommissionId ?? $"630568-{input.ContactDetail?.ContractNumber}";
+                submission["statusReason"] = input.Submission.StatusReason ?? "Open";
+                submission["team"] = input.Submission.Team ?? "Cheetah (AYMA)";
+            }
+            else
+            {
+                // Default values when no Submission data provided
+                submission["caseCount"] = "-1.00";
+                submission["adviser"] = "";
+                submission["caseStatusId"] = "8";
+                submission["figPercentage"] = "100";
+                submission["investmentAmount"] = input.ContactDetail?.InvestAmount ?? "0";
+                submission["premiumId"] = $"OMP-{input.ContactDetail?.ContractNumber}";
+                submission["productCode"] = "OMP";
+                submission["productId"] = "100";
+                submission["salesCode"] = "630568";
+                submission["splitCommissionId"] = $"630568-{input.ContactDetail?.ContractNumber}";
+                submission["statusReason"] = "Open";
+                submission["team"] = "Cheetah (AYMA)";
             }
 
             return new Dictionary<string, object>
