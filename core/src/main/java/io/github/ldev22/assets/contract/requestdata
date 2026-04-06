@@ -5,6 +5,8 @@ namespace Ade.Club51.Lambda.Contract.Update.Models
         public string CaseId { get; set; }
 
         public ContactDetail ContactDetail { get; set; }
+
+        public Submission Submission { get; set; }
     }
 
     public class ContactDetail
@@ -57,5 +59,3 @@ namespace Ade.Club51.Lambda.Contract.Update.Models
         public string Team { get; set; } = string.Empty;
     }
 }
-
-'RequestData' does not contain a definition for 'Submission' and no accessible extension method 'Submission' accepting a first argument of type 'RequestData' could be found (are you missing a using directive or an assembly reference?)

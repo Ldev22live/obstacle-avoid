@@ -9,6 +9,7 @@ using Ade.Club51.Lambda.Contract.Update.Models;
 using Amazon.Lambda.Core;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 
