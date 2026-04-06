@@ -75,8 +75,37 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                 }
 
                 // Execute Submission Update SP
+                // First, query for existing newSubmissionId using caseId
+                string? newSubmissionId = null;
+                using (var submissionIdCommand = connection.CreateCommand())
+                {
+                    submissionIdCommand.CommandText = $@"
+                        SELECT SUBMISSIONS_ID
+                        FROM {db}.{schema}.FIFTYONECLUB_SUBMISSIONS
+                        WHERE SUBMISSIONS_CASE_ID = '{input.CaseId}'
+                          AND SUBMISSIONS_ENDDATE = '9999-12-31'::DATE
+                          AND SUBMISSIONS_ISLATEST = 1
+                          AND SUBMISSIONS_ISDELETED = 0
+                        ORDER BY SUBMISSIONS_MODIFIEDON DESC
+                        LIMIT 1";
+                    submissionIdCommand.CommandType = CommandType.Text;
+                    LambdaLogger.Log($"INFO: LambdaLogger: {LambdaLogger.Log}");
+                    LambdaLogger.Log($"INFO: Querying for newSubmissionId: {submissionIdCommand.CommandText}");
+
+                    using var submissionIdReader = submissionIdCommand.ExecuteReader();
+                    if (submissionIdReader.Read())
+                    {
+                        newSubmissionId = submissionIdReader[0]?.ToString();
+                        LambdaLogger.Log($"INFO: Found newSubmissionId: {newSubmissionId}");
+                    }
+                    else
+                    {
+                        LambdaLogger.Log("WARN: No existing submission found for this case - will create new");
+                    }
+                }
+
                 var submissionProcName = Environment.GetEnvironmentVariable("SUBMISSION_PROC") ?? "CREATEUPDATE_SUBMISSIONS";
-                var submissionPayload = CreateSubmissionPayload(input);
+                var submissionPayload = CreateSubmissionPayload(input, newSubmissionId);
                 var submissionJson = System.Text.Json.JsonSerializer.Serialize(submissionPayload, options);
 
                 // Validate submission payload is not empty
@@ -186,14 +215,15 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
             };
         }
 
-        private Dictionary<string, object> CreateSubmissionPayload(RequestData input)
+        private Dictionary<string, object> CreateSubmissionPayload(RequestData input, string? newSubmissionId)
         {
             var submission = new Dictionary<string, object?>();
 
             // Map ContactDetail fields to Submission fields where they align
             if (input.ContactDetail != null)
             {
-                submission["new51ClubsubmissionId"] = input.ContactDetail.ContractDetailId;
+                // Use queried newSubmissionId if available, otherwise fall back to ContractDetailId
+                submission["new51ClubsubmissionId"] = newSubmissionId ?? input.ContactDetail.ContractDetailId;
                 submission["contractNumber"] = input.ContactDetail.ContractNumber;
                 submission["productName"] = input.ContactDetail.ProductName;
                 submission["commAllowance"] = input.ContactDetail.CommAllowance;
