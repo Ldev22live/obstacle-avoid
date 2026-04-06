@@ -73,6 +73,33 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                     throw new InvalidOperationException($"SP failed: {spResult}");
                 }
 
+                // Execute Submission Update SP
+                var submissionProcName = Environment.GetEnvironmentVariable("SUBMISSION_PROC") ?? "CREATEUPDATE_SUBMISSIONS";
+                var submissionPayload = CreateSubmissionPayload(input);
+                var submissionJson = System.Text.Json.JsonSerializer.Serialize(submissionPayload, options);
+                var escapedSubmissionJson = "'" + submissionJson.Replace("'", "''") + "'";
+
+                using (var submissionCommand = connection.CreateCommand())
+                {
+                    submissionCommand.CommandText = $"CALL {db}.{schema}.{submissionProcName}({escapedSubmissionJson})";
+                    submissionCommand.CommandType = CommandType.Text;
+
+                    LambdaLogger.Log($"INFO: Executing submission SP: {submissionCommand.CommandText}");
+
+                    using var submissionReader = submissionCommand.ExecuteReader();
+                    string? submissionResult = null;
+                    while (submissionReader.Read())
+                    {
+                        submissionResult = submissionReader[0]?.ToString();
+                        LambdaLogger.Log($"INFO: Submission SP returned: {submissionResult}");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(submissionResult) || submissionResult.StartsWith("Submission Failed"))
+                    {
+                        throw new InvalidOperationException($"Submission SP failed: {submissionResult}");
+                    }
+                }
+
                 // Query for the new contract detail ID matching CaseQueries pattern - get most recent
                 string newContractDetailId;
                 using (var idCommand = connection.CreateCommand())
@@ -147,6 +174,35 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                 {
                     ["contractDetails"] = new[] { contractDetail }
                 }
+            };
+        }
+
+        private Dictionary<string, object> CreateSubmissionPayload(RequestData input)
+        {
+            var submission = new Dictionary<string, object?>();
+
+            if (input.ContactDetail != null)
+            {
+                submission["new51ClubsubmissionId"] = input.ContactDetail.ContractDetailId;
+                submission["contractNumber"] = input.ContactDetail.ContractNumber;
+                submission["productName"] = input.ContactDetail.ProductName;
+                submission["investType"] = input.ContactDetail.InvestType;
+                submission["investAmount"] = input.ContactDetail.InvestAmount;
+                submission["payFrequency"] = input.ContactDetail.PayFrequency;
+                submission["payMethod"] = input.ContactDetail.PayMethod;
+                submission["commAllowance"] = input.ContactDetail.CommAllowance;
+                submission["fpFee"] = input.ContactDetail.FpFee;
+                submission["negCommAllowance"] = input.ContactDetail.NegCommAllowance;
+                submission["negCommPercentage"] = input.ContactDetail.NegCommPercentage;
+                submission["createdBy"] = input.ContactDetail.CreatedBy;
+                submission["createdOn"] = input.ContactDetail.CreatedOn;
+                submission["modifiedBy"] = input.ContactDetail.ModifiedBy;
+                submission["modifiedOn"] = input.ContactDetail.ModifiedOn;
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["submission"] = submission
             };
         }
 
