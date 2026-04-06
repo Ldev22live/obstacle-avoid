@@ -1,0 +1,483 @@
+CREATE OR REPLACE PROCEDURE SOURCE.CLUB51.CREATEUPDATE_SUBMISSIONS("DAESUBMISSION" VARCHAR)
+RETURNS VARCHAR
+LANGUAGE JAVASCRIPT
+COMMENT='SP to insert a 51club submission record or update it'
+EXECUTE AS OWNER
+AS '
+    const arr = [''BANCS PAS'',''OMEGA PAS'',''UNIT TRUST PAS'',''WEALTH PAS''];
+
+    var DoSCD = 0; //manage slowly changing dimension if there is an update
+    var SubmissionId,caseno,contractnumber,figPercentage,investmentAmount,commAllowance,negCommAllowance,team;
+    var fpFee,caseCount,productCode,productid,submissionDate,clubSubmissionDate,salesCode,isLatest,isReversal;
+    var isDeleted,premiumId,splitCommissionId,dateSubmitted,adviser,createdBy,createdOn,modifiedBy,modifiedOn;
+    var isManCancelled=0;
+    var caseStatusId;
+    var splitType; // Adviser or IC
+    var caseLastModifiedBy; // Ripple down modified by if only case changes
+    var stateid=5; // Active
+    var statusid=10; // Submit
+    var rs1,rs2,rs3,rs4,rs5;
+
+    var d = new Date();
+    d.setHours(d.getHours() + 2); // add 2 hours //ALEX
+    var currDate = d.toISOString().replace(/T/, '' '').replace(/\\..+/, '''');
+
+    d.setDate(d.getDate() + (6+(7-d.getDay())) % 7); // Date for next Saturday
+    var NextSaturday = d.toISOString().split(''T'')[0];
+
+    // Insert Submission into source table SOURCE.CLUB51.DAESUBMISSION
+    var sql = "INSERT INTO SOURCE.CLUB51.DAESUBMISSION(s) SELECT ''" + DAESUBMISSION + "'';";
+    snowflake.createStatement( {sqlText: sql} ).execute();
+    //return DAESUBMISSION;
+
+
+    // Inline debug logging
+    function logDebug(message) {
+        var debugSql = "INSERT INTO SOURCE.CLUB51.ALEXDEBUG (s) SELECT ''" + message + "'';";
+        snowflake.createStatement({sqlText: debugSql}).execute();
+    }
+
+
+
+    try {
+        // If Success check for insert or update action
+        sql = "";
+        sql = "WITH x AS (SELECT parse_json(''" + DAESUBMISSION + "''::variant) as str) ";
+        sql += "SELECT str:submission.new51ClubsubmissionId::string as SUBMISSIONSID, \\
+            str:submission.caseNumber::string as CASE_ID, \\
+            str:submission.caseStatusID::string as CASESTATUSID, \\
+            str:submission.caseLastModifiedBy::string as CASELASTMODIFIEDBY, \\
+            str:submission.team::string as TEAM, \\
+            str:submission.contractNumber::string as CONTRACTNUMBER, \\
+            str:submission.figPercentage::string as FIGPERCENTAGE, \\
+            str:submission.negCommPercentage::string as NEGCOMPERCENTAGE, \\
+            str:submission.commPercentage::string as COMPERCENTAGE, \\
+            str:submission.investmentAmount::string as INVESTMENTAMOUNT, \\
+            str:submission.commAllowance::string as COMMALLOWANCE, \\
+            str:submission.negCommAllowance::string as NEGCOMMALLOWANCE, \\
+            str:submission.fpFee::string as FPFEE, \\
+            str:submission.productCode::string as PRODUCTCODE, \\
+            str:submission.productName::string as PRODUCTNAME, \\
+            str:submission.productId::string as PRODUCTID, \\
+            str:submission.salesCode::string as SALESCODE, \\
+            str:submission.premiumId::string as PREMIUMID, \\
+            str:submission.splitCommissionId::string as SPLITCOMMISSIONID, \\
+            str:submission.splitType::string as SPLITTYPE, \\
+            str:submission.caseCount::string as CASECOUNT, \\
+            str:submission.adviser::string as ADVISER, \\
+            str:submission.createdBy::string as CREATEDBY, \\
+            str:submission.modifiedBy::string as MODIFIEDBY FROM x;";
+        var rs = snowflake.createStatement( {sqlText: sql} ).execute();
+        rs.next();
+
+        caseno = rs.getColumnValue("CASE_ID");
+        if(caseno == null)
+            return "Submission Failed: Malformed JSON payload";
+
+        caseStatusId = rs.getColumnValue("CASESTATUSID");
+        caseLastModifiedBy = (rs.getColumnValue("CASELASTMODIFIEDBY") == null) ? '''' : rs.getColumnValue("CASELASTMODIFIEDBY");
+        team=(rs.getColumnValue("TEAM") == null) ? '''' : rs.getColumnValue("TEAM");
+        SubmissionId=(rs.getColumnValue("SUBMISSIONSID") == null) ? '''' : rs.getColumnValue("SUBMISSIONSID");
+        contractnumber=(rs.getColumnValue("CONTRACTNUMBER") == null) ? '''' : rs.getColumnValue("CONTRACTNUMBER");
+        figPercentage=(rs.getColumnValue("FIGPERCENTAGE") == null) ? 0 : rs.getColumnValue("FIGPERCENTAGE");
+        negCommPercentage=(rs.getColumnValue("NEGCOMPERCENTAGE") == null) ? 0 : rs.getColumnValue("NEGCOMPERCENTAGE");
+        commPercentage=(rs.getColumnValue("COMPERCENTAGE") == null) ? 0 : rs.getColumnValue("COMPERCENTAGE");
+        investmentAmount=(rs.getColumnValue("INVESTMENTAMOUNT") == null) ? 0 : rs.getColumnValue("INVESTMENTAMOUNT");
+        commAllowance=(rs.getColumnValue("COMMALLOWANCE") == null) ? 0 : rs.getColumnValue("COMMALLOWANCE");
+        negCommAllowance=(rs.getColumnValue("NEGCOMMALLOWANCE") == null) ? 0 : rs.getColumnValue("NEGCOMMALLOWANCE");
+        fpFee=(rs.getColumnValue("FPFEE") == null) ? 0 : rs.getColumnValue("FPFEE");
+        productCode=(rs.getColumnValue("PRODUCTCODE") == null) ? '''' : rs.getColumnValue("PRODUCTCODE");
+        salesCode=(rs.getColumnValue("SALESCODE") == null) ? '''' : rs.getColumnValue("SALESCODE");
+        premiumId=(rs.getColumnValue("PREMIUMID") == null) ? '''' : rs.getColumnValue("PREMIUMID");
+        splitCommissionId=(rs.getColumnValue("SPLITCOMMISSIONID") == null) ? '''' : rs.getColumnValue("SPLITCOMMISSIONID");
+        splitType=(rs.getColumnValue("SPLITTYPE") == null) ? ''Adviser'' : rs.getColumnValue("SPLITTYPE");
+        adviser=(rs.getColumnValue("ADVISER") == null) ? '''' : rs.getColumnValue("ADVISER");
+        productid = (rs.getColumnValue("PRODUCTID") == null) ? 0 : rs.getColumnValue("PRODUCTID");
+        createdBy=(rs.getColumnValue("CREATEDBY") == null) ? '''' : rs.getColumnValue("CREATEDBY");
+        modifiedBy=(rs.getColumnValue("MODIFIEDBY") == null) ? '''' : rs.getColumnValue("MODIFIEDBY");
+  ModfifiedCaseCount = (rs.getColumnValue("CASECOUNT") == null) ? '''' : rs.getColumnValue("CASECOUNT");
+
+        //logDebug("ModfifiedCaseCount: " + ModfifiedCaseCount)
+
+        if(ModfifiedCaseCount =='''')
+        {
+        caseCount = figPercentage/100;
+        }else
+        {
+        caseCount=ModfifiedCaseCount;
+        }
+
+        negCommAllowance = negCommAllowance * (figPercentage / 100) + (fpFee * caseCount);
+        investmentAmount = investmentAmount * (figPercentage / 100);
+        commAllowance = commAllowance * (figPercentage / 100) + (fpFee * caseCount);
+
+        isReversal=0;
+        isManCancelled = 0;
+        dateSubmitted =''9999-12-31''
+
+
+        if(SubmissionId != '''')
+            {
+            sql = "";
+            sql ="SELECT * FROM SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS WHERE \\
+                SUBMISSIONS_ENDDATE = ''9999-12-31''::DATE AND SUBMISSIONS_ID=''" + SubmissionId + "'';";
+
+            rs5 = snowflake.createStatement( {sqlText: sql} ).execute();
+            rs5.next();
+            col_count = 0;
+
+            var Origfigpercentage = rs5.getColumnValue("SUBMISSIONS_FIGPERCENTAGE");
+           // var Orignegcompercentage = rs5.getColumnValue("FI_NEGCOMMPERCENTAGE");
+           // var Origcompercentage = rs5.getColumnValue("SUBMISSIONS_FIGPERCENTAGE");
+            var OrigfpFee = rs5.getColumnValue("SUBMISSIONS_FPFEE");
+            var Origstatusid = rs5.getColumnValue("SUBMISSIONS_STATUS_ID");
+            var Origcasestatusid = rs5.getColumnValue("SUBMISSIONS_CASE_STATUS_ID");
+            var OriginvestAmt = rs5.getColumnValue("SUBMISSIONS_INVESTAMOUNT");
+            var OrigcommAllow = rs5.getColumnValue("SUBMISSIONS_COMMALLOWANCE");
+            var OrignegcommAllow = rs5.getColumnValue("SUBMISSIONS_NEGCOMMALLOWANCE");
+            var OrigCreatedOn = rs5.getColumnValue("SUBMISSIONS_CREATEDON");
+            var OrigModifiedON = rs5.getColumnValue("SUBMISSIONS_MODIFIEDON");
+            var OrigSubmissionDateSubmitted = rs5.getColumnValue("SUBMISSIONS_DATESUBMITTED");
+            var OrigSubmissionDate = rs5.getColumnValue("SUBMISSIONS_SUBMISSIONDATE");
+            var Orig51ClubSubmission= rs5.getColumnValue("SUBMISSIONS_51CLUBSUBMISSIONDATE");
+            col_count += 1;
+
+
+
+
+
+  // Dont create the 51 Club record if the split type is Adviser or IC AND the Fig Percentage is 0
+            // also check for NULL value on Fig Percentage - done when receiving the data
+            if(Number(figPercentage) == 0  && (splitType == ''Adviser'' || splitType == ''IC''))
+            {
+        //logDebug("Hello");
+                sql = "";
+                sql ="UPDATE SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS SET SUBMISSIONS_MODIFIEDON = CURRENT_DATE(), \\
+                    SUBMISSIONS_ENDDATE = CURRENT_DATE(), SUBMISSIONS_FIGPERCENTAGE = 0, SUBMISSIONS_ISLATEST=0 \\
+                    WHERE SUBMISSIONS_ID=''" + SubmissionId + "'';";
+                snowflake.createStatement( {sqlText: sql} ).execute();
+              if(Origstatusid == 10) // Submit
+                {
+               // logDebug("Just before return =1")
+                 return ''1'';
+                }else
+                    {
+                   // logDebug("Here we are- Submitted")
+                    // If in the submitted state do a reversal, islatest and status is submit
+                    isReversal = 1;
+                    }
+            }
+
+
+
+
+            if(Origcasestatusid == 8 && caseStatusId == 7) // Open to On Hold
+                {
+          //  logDebug("Origcasestatusid"+ Origcasestatusid + "   caseStatusId" +caseStatusId);
+                // Change submission status
+                if(Origstatusid == 9) // Submitted = 9
+                    {
+                    // On Hold reverse submission and create new record for 51Club
+                    isReversal = 1;
+                    isLatest = 0;
+                     //Alex need a record for history
+                sqlI = "";
+                sqlI = "INSERT INTO SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS(SUBMISSIONS_CASE_ID,SUBMISSIONS_CONTRACTNUMBER, \\
+                SUBMISSIONS_INVESTAMOUNT,SUBMISSIONS_COMMALLOWANCE,SUBMISSIONS_NEGCOMMALLOWANCE,SUBMISSIONS_FPFEE, \\
+                SUBMISSIONS_CASECOUNT,SUBMISSIONS_PRODUCT_ID,SUBMISSIONS_SUBMISSIONDATE,SUBMISSIONS_51CLUBSUBMISSIONDATE, \\
+                SUBMISSIONS_SALESCODE,SUBMISSIONS_ISDELETED,SUBMISSIONS_ISLATEST,SUBMISSIONS_ISREVERSAL,SUBMISSIONS_ISMANUALLYCANCELLED, \\
+                SUBMISSIONS_PREMIUMID,SUBMISSIONS_SPLITCOMMISSIONID,SUBMISSIONS_DATESUBMITTED,SUBMISSIONS_ADVISERNAME, \\
+                SUBMISSIONS_STATUS_ID,SUBMISSIONS_STATE_ID,SUBMISSIONS_CREATEDBY,SUBMISSIONS_CREATEDON,SUBMISSIONS_MODIFIEDBY, \\
+                SUBMISSIONS_MODIFIEDON,SUBMISSIONS_CASE_STATUS_ID,SUBMISSIONS_TEAM,SUBMISSIONS_FIGPERCENTAGE) \\
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                stmtI = snowflake.createStatement(
+                    {
+                    sqlText: sqlI,
+                      binds: [rs5.getColumnValue("SUBMISSIONS_CASE_ID"),rs5.getColumnValue("SUBMISSIONS_CONTRACTNUMBER"),rs5.getColumnValue("SUBMISSIONS_INVESTAMOUNT"),rs5.getColumnValue("SUBMISSIONS_COMMALLOWANCE"),rs5.getColumnValue("SUBMISSIONS_NEGCOMMALLOWANCE"),(rs5.getColumnValue(1) == null) ? 0 : rs5.getColumnValue("SUBMISSIONS_FPFEE"),                    rs5.getColumnValue("SUBMISSIONS_CASECOUNT"),rs5.getColumnValue("SUBMISSIONS_PRODUCT_ID"),rs5.getColumnValue("SUBMISSIONS_SUBMISSIONDATE"),rs5.getColumnValue("SUBMISSIONS_51CLUBSUBMISSIONDATE"),rs5.getColumnValue("SUBMISSIONS_SALESCODE"),0,0,             0,0,rs5.getColumnValue("SUBMISSIONS_PREMIUMID"),rs5.getColumnValue("SUBMISSIONS_SPLITCOMMISSIONID"),rs5.getColumnValue("SUBMISSIONS_DATESUBMITTED"),rs5.getColumnValue("SUBMISSIONS_ADVISERNAME"),rs5.getColumnValue("SUBMISSIONS_STATUS_ID"),rs5.getColumnValue("SUBMISSIONS_STATE_ID"),                    rs5.getColumnValue("SUBMISSIONS_CREATEDBY"),rs5.getColumnValue("SUBMISSIONS_CREATEDON"),rs5.getColumnValue("SUBMISSIONS_MODIFIEDBY"),currDate,rs5.getColumnValue("SUBMISSIONS_CASE_STATUS_ID"),rs5.getColumnValue("SUBMISSIONS_TEAM"),rs5.getColumnValue("SUBMISSIONS_FIGPERCENTAGE")]
+                    });
+                stmtI.execute();
+                //
+                    }
+                else
+                    {
+                    isLatest = 1;
+                    }
+
+                // Close existing record
+                sql = "";
+                sql ="UPDATE SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS SET SUBMISSIONS_ENDDATE=CURRENT_DATE(), \\
+                        SUBMISSIONS_ISLATEST=" + isLatest + " WHERE SUBMISSIONS_ID=''" + SubmissionId + "'';";
+                snowflake.createStatement( {sqlText: sql} ).execute();
+
+                statusid = 11; // On Hold status
+                DoSCD = 1; //Create new record
+                }
+            else if(Origcasestatusid == 7 && caseStatusId == 8) // On Hold to Open
+                {
+                  logDebug("Origcasestatusid"+ Origcasestatusid + "   caseStatusId" +caseStatusId);
+                if(Origstatusid == 9) // Submitted = 9
+                    {
+                    // On Hold reverse submission and create new record for 51Club
+                    isReversal = 1;
+                    isLatest = 0;
+                 //Alex need a record for history
+                sqlI = "";
+                sqlI = "INSERT INTO SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS(SUBMISSIONS_CASE_ID,SUBMISSIONS_CONTRACTNUMBER, \\
+                SUBMISSIONS_INVESTAMOUNT,SUBMISSIONS_COMMALLOWANCE,SUBMISSIONS_NEGCOMMALLOWANCE,SUBMISSIONS_FPFEE, \\
+                SUBMISSIONS_CASECOUNT,SUBMISSIONS_PRODUCT_ID,SUBMISSIONS_SUBMISSIONDATE,SUBMISSIONS_51CLUBSUBMISSIONDATE, \\
+                SUBMISSIONS_SALESCODE,SUBMISSIONS_ISDELETED,SUBMISSIONS_ISLATEST,SUBMISSIONS_ISREVERSAL,SUBMISSIONS_ISMANUALLYCANCELLED, \\
+                SUBMISSIONS_PREMIUMID,SUBMISSIONS_SPLITCOMMISSIONID,SUBMISSIONS_DATESUBMITTED,SUBMISSIONS_ADVISERNAME, \\
+                SUBMISSIONS_STATUS_ID,SUBMISSIONS_STATE_ID,SUBMISSIONS_CREATEDBY,SUBMISSIONS_CREATEDON,SUBMISSIONS_MODIFIEDBY, \\
+                SUBMISSIONS_MODIFIEDON,SUBMISSIONS_CASE_STATUS_ID,SUBMISSIONS_TEAM,SUBMISSIONS_FIGPERCENTAGE) \\
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                stmtI = snowflake.createStatement(
+                    {
+                    sqlText: sqlI,
+                      binds: [rs5.getColumnValue("SUBMISSIONS_CASE_ID"),rs5.getColumnValue("SUBMISSIONS_CONTRACTNUMBER"),rs5.getColumnValue("SUBMISSIONS_INVESTAMOUNT"),rs5.getColumnValue("SUBMISSIONS_COMMALLOWANCE"),rs5.getColumnValue("SUBMISSIONS_NEGCOMMALLOWANCE"),(rs5.getColumnValue(1) == null) ? 0 : rs5.getColumnValue("SUBMISSIONS_FPFEE"),                    rs5.getColumnValue("SUBMISSIONS_CASECOUNT"),rs5.getColumnValue("SUBMISSIONS_PRODUCT_ID"),rs5.getColumnValue("SUBMISSIONS_SUBMISSIONDATE"),rs5.getColumnValue("SUBMISSIONS_51CLUBSUBMISSIONDATE"),rs5.getColumnValue("SUBMISSIONS_SALESCODE"),0,0,             0,0,rs5.getColumnValue("SUBMISSIONS_PREMIUMID"),rs5.getColumnValue("SUBMISSIONS_SPLITCOMMISSIONID"),rs5.getColumnValue("SUBMISSIONS_DATESUBMITTED"),rs5.getColumnValue("SUBMISSIONS_ADVISERNAME"),9,rs5.getColumnValue("SUBMISSIONS_STATE_ID"),                    rs5.getColumnValue("SUBMISSIONS_CREATEDBY"),rs5.getColumnValue("SUBMISSIONS_CREATEDON"),rs5.getColumnValue("SUBMISSIONS_MODIFIEDBY"),currDate,rs5.getColumnValue("SUBMISSIONS_CASE_STATUS_ID"),rs5.getColumnValue("SUBMISSIONS_TEAM"),rs5.getColumnValue("SUBMISSIONS_FIGPERCENTAGE")]
+                    });
+                stmtI.execute();
+                //
+                    }
+                 else
+                    {
+                    isLatest = 1;
+                    }
+                 // Close existing record
+               // Close existing record
+                sql = "";
+                sql ="UPDATE SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS SET SUBMISSIONS_ENDDATE=CURRENT_DATE(), \\
+                        SUBMISSIONS_ISLATEST=" + isLatest + " WHERE SUBMISSIONS_ID=''" + SubmissionId + "'';";
+                snowflake.createStatement( {sqlText: sql} ).execute();
+
+                statusid = 10; // On Hold status
+                DoSCD = 1; //Create new record
+
+
+
+                }
+            else if(Origcasestatusid == 8 && caseStatusId == 2) // Open to Cancelled Manually
+                {
+                // Change submission status
+                if(Origstatusid == 9) // Submitted = 9
+                    {
+                    // Reverse submission and no new record created for 51Club
+                    isReversal = 1;
+                    isLatest = 0;
+                    }
+                else
+                    {
+                    isLatest = 1;
+                    }
+
+                // Close existing record
+                sql = "";
+                sql ="UPDATE SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS SET SUBMISSIONS_ENDDATE = CURRENT_DATE(), \\
+                    SUBMISSIONS_ISLATEST=" + isLatest + " WHERE SUBMISSIONS_ID=''" + SubmissionId + "'';";
+                snowflake.createStatement( {sqlText: sql} ).execute();
+
+                isManCancelled = 1;
+                    if( Origstatusid == 9) // Submitted = 9
+                    {
+                        statusid = 9; // Submitted
+                        stateid = 5; // Keep it active
+                    }
+                    else if(Origstatusid == 10)
+                    {
+                        statusid = 12; // Submitted not cancelled manually as it previously WAS 12
+                        stateid = 4; // Inactive
+                    }
+
+                DoSCD = 1; //Create new record
+                }
+            else if(Origcasestatusid == 2 && caseStatusId == 8) // Cancelled Manually to Open
+                {
+                // Close existing record
+                sql = "";
+                sql ="UPDATE SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS T \\
+                    SET SUBMISSIONS_ENDDATE=CURRENT_DATE(),SUBMISSIONS_ISLATEST=0 FROM ( \\
+                    SELECT SUBMISSIONS_ID FROM SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS \\
+                    WHERE SUBMISSIONS_CASE_ID=''" + caseno + "'' AND \\
+                        SUBMISSIONS_CONTRACTNUMBER=''" + contractnumber + "'' AND \\
+                        SUBMISSIONS_SALESCODE=''" + salesCode + "'' AND \\
+                        SUBMISSIONS_PRODUCT_ID=" + productid + " AND \\
+                        SUBMISSIONS_ENDDATE = ''9999-12-31''::DATE) S \\
+                        WHERE T.SUBMISSIONS_ID = S.SUBMISSIONS_ID;";
+                snowflake.createStatement( {sqlText: sql} ).execute();
+
+                statusid = 10; // Submit
+                stateid=5; // Active
+                DoSCD = 1; //Create new record
+                }
+            else // caseStatusId = 8 Open
+                {
+               // logDebug("Org Inv: "+OriginvestAmt+ "  New Invest" +investmentAmount)
+                //return "OrignegcommAllow " + OrignegcommAllow + " negCommAllowance " + negCommAllowance;
+                if(Origfigpercentage != figPercentage || OrigfpFee != fpFee || OriginvestAmt != investmentAmount ||
+                        OrigcommAllow != commAllowance || OrignegcommAllow != negCommAllowance)
+                    {
+                    if(Origstatusid == 9) // Submitted = 9
+                        {
+                        // Reverse submission and create new record created for 51club
+                        isReversal = 1;
+                        //if CD has changed need a history records
+                        //Alex need a record for history
+                        //logDebug(''Start'')
+                sqlI = "";
+                sqlI = "INSERT INTO SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS(SUBMISSIONS_CASE_ID,SUBMISSIONS_CONTRACTNUMBER, \\
+                SUBMISSIONS_INVESTAMOUNT,SUBMISSIONS_COMMALLOWANCE,SUBMISSIONS_NEGCOMMALLOWANCE,SUBMISSIONS_FPFEE, \\
+                SUBMISSIONS_CASECOUNT,SUBMISSIONS_PRODUCT_ID,SUBMISSIONS_SUBMISSIONDATE,SUBMISSIONS_51CLUBSUBMISSIONDATE, \\
+                SUBMISSIONS_SALESCODE,SUBMISSIONS_ISDELETED,SUBMISSIONS_ISLATEST,SUBMISSIONS_ISREVERSAL,SUBMISSIONS_ISMANUALLYCANCELLED, \\
+                SUBMISSIONS_PREMIUMID,SUBMISSIONS_SPLITCOMMISSIONID,SUBMISSIONS_DATESUBMITTED,SUBMISSIONS_ADVISERNAME, \\
+                SUBMISSIONS_STATUS_ID,SUBMISSIONS_STATE_ID,SUBMISSIONS_CREATEDBY,SUBMISSIONS_CREATEDON,SUBMISSIONS_MODIFIEDBY, \\
+                SUBMISSIONS_MODIFIEDON,SUBMISSIONS_CASE_STATUS_ID,SUBMISSIONS_TEAM,SUBMISSIONS_FIGPERCENTAGE) \\
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                stmtI = snowflake.createStatement(
+                    {
+                    sqlText: sqlI,
+                      binds:                    [rs5.getColumnValue("SUBMISSIONS_CASE_ID"),rs5.getColumnValue("SUBMISSIONS_CONTRACTNUMBER"),rs5.getColumnValue("SUBMISSIONS_INVESTAMOUNT"),rs5.getColumnValue("SUBMISSIONS_COMMALLOWANCE"),rs5.getColumnValue("SUBMISSIONS_NEGCOMMALLOWANCE"),(rs5.getColumnValue(1) == null) ? 0 : rs5.getColumnValue("SUBMISSIONS_FPFEE"),                    rs5.getColumnValue("SUBMISSIONS_CASECOUNT"),rs5.getColumnValue("SUBMISSIONS_PRODUCT_ID"),rs5.getColumnValue("SUBMISSIONS_SUBMISSIONDATE"),rs5.getColumnValue("SUBMISSIONS_51CLUBSUBMISSIONDATE"),rs5.getColumnValue("SUBMISSIONS_SALESCODE"),0,0,             0,0,rs5.getColumnValue("SUBMISSIONS_PREMIUMID"),rs5.getColumnValue("SUBMISSIONS_SPLITCOMMISSIONID"),rs5.getColumnValue("SUBMISSIONS_DATESUBMITTED"),rs5.getColumnValue("SUBMISSIONS_ADVISERNAME"),9,rs5.getColumnValue("SUBMISSIONS_STATE_ID"),                    rs5.getColumnValue("SUBMISSIONS_CREATEDBY"),rs5.getColumnValue("SUBMISSIONS_CREATEDON"),rs5.getColumnValue("SUBMISSIONS_MODIFIEDBY"),currDate,rs5.getColumnValue("SUBMISSIONS_CASE_STATUS_ID"),rs5.getColumnValue("SUBMISSIONS_TEAM"),rs5.getColumnValue("SUBMISSIONS_FIGPERCENTAGE")]
+                    });
+                stmtI.execute();
+               // logDebug(''End'')
+                        }
+
+                        // Do SCD2 which will give a new record for Submit and Submitted
+                        statusid = 10; // Submit
+                        DoSCD = 1;
+                        sql = "";
+                        sql = "UPDATE SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS \\
+                            SET SUBMISSIONS_ENDDATE=CURRENT_DATE(),SUBMISSIONS_ISLATEST = 0 WHERE \\
+                            SUBMISSIONS_ENDDATE=''9999-12-31''::DATE AND SUBMISSIONS_CASE_ID=''" + caseno + "'' AND \\
+                            SUBMISSIONS_ID=''" + SubmissionId + "''";
+                        snowflake.createStatement( {sqlText: sql} ).execute();
+                    }
+
+            //   logDebug("isReversal??" + isReversal)
+                 }
+
+            if(isReversal == 1)
+                {
+
+                //return ''Inside reversal'';
+                var rev_caseno = rs5.getColumnValue("SUBMISSIONS_CASE_ID");
+                var rev_contractnumber = rs5.getColumnValue("SUBMISSIONS_CONTRACTNUMBER");
+                var rev_salesCode = rs5.getColumnValue("SUBMISSIONS_SALESCODE");
+                var rev_adviser = rs5.getColumnValue("SUBMISSIONS_ADVISERNAME");
+                var rev_figpercentage = rs5.getColumnValue("SUBMISSIONS_FIGPERCENTAGE");
+                var rev_investAmount = rs5.getColumnValue("SUBMISSIONS_INVESTAMOUNT")*-1;
+                var rev_commAllowance = rs5.getColumnValue("SUBMISSIONS_COMMALLOWANCE")*-1;
+                var rev_negCommAllowance = rs5.getColumnValue("SUBMISSIONS_NEGCOMMALLOWANCE")*-1;
+                var rev_fpFee = (rs5.getColumnValue(1) == null) ? 0 : rs5.getColumnValue("SUBMISSIONS_FPFEE")*-1;
+                var rev_caseCount = rs5.getColumnValue("SUBMISSIONS_CASECOUNT")*-1;
+                var rev_productid = rs5.getColumnValue("SUBMISSIONS_PRODUCT_ID");
+                var rev_caseStatusId = rs5.getColumnValue("SUBMISSIONS_CASE_STATUS_ID");
+                var rev_statusId = 10; //Change to Submit rs5.getColumnValue("SUBMISSIONS_STATUS_ID");
+                var rev_stateid = rs5.getColumnValue("SUBMISSIONS_STATE_ID");
+                var rev_premiumId = rs5.getColumnValue("SUBMISSIONS_PREMIUMID");
+                var rev_splitCommissionId = rs5.getColumnValue("SUBMISSIONS_SPLITCOMMISSIONID");
+                var rev_submissionDate = NextSaturday; //rs5.getColumnValue("SUBMISSIONS_SUBMISSIONDATE"); reversal must always be next saturday
+                var rev_clubSubmissionDate = NextSaturday; //rs5.getColumnValue("SUBMISSIONS_51CLUBSUBMISSIONDATE");reversal must always be next saturday
+                var rev_dateSubmitted = ''9999-12-31''// rs5.getColumnValue("SUBMISSIONS_DATESUBMITTED");
+                var rev_team = rs5.getColumnValue("SUBMISSIONS_TEAM");
+                var rev_createdBy = rs5.getColumnValue("SUBMISSIONS_CREATEDBY");
+                //var rev_createdOn = rs5.getColumnValue("SUBMISSIONS_CREATEDON");
+                var rev_createdOn = currDate;
+                var rev_modifiedBy = rs5.getColumnValue("SUBMISSIONS_MODIFIEDBY");
+                var rev_modifiedOn = currDate;
+
+                // It will return true if caseLastModifiedBy is one of array values else false
+                if(!arr.includes(caseLastModifiedBy) && arr.includes(rev_modifiedBy))
+                    {
+                    rev_modifiedBy = caseLastModifiedBy;
+                    }
+
+                // Create reversal
+                sql = "";
+                sql = "INSERT INTO SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS(SUBMISSIONS_CASE_ID,SUBMISSIONS_CONTRACTNUMBER, \\
+                SUBMISSIONS_INVESTAMOUNT,SUBMISSIONS_COMMALLOWANCE,SUBMISSIONS_NEGCOMMALLOWANCE,SUBMISSIONS_FPFEE, \\
+                SUBMISSIONS_CASECOUNT,SUBMISSIONS_PRODUCT_ID,SUBMISSIONS_SUBMISSIONDATE,SUBMISSIONS_51CLUBSUBMISSIONDATE, \\
+                SUBMISSIONS_SALESCODE,SUBMISSIONS_ISDELETED,SUBMISSIONS_ISLATEST,SUBMISSIONS_ISREVERSAL,SUBMISSIONS_ISMANUALLYCANCELLED, \\
+                SUBMISSIONS_PREMIUMID,SUBMISSIONS_SPLITCOMMISSIONID,SUBMISSIONS_DATESUBMITTED,SUBMISSIONS_ADVISERNAME, \\
+                SUBMISSIONS_STATUS_ID,SUBMISSIONS_STATE_ID,SUBMISSIONS_CREATEDBY,SUBMISSIONS_CREATEDON,SUBMISSIONS_MODIFIEDBY, \\
+                SUBMISSIONS_MODIFIEDON,SUBMISSIONS_CASE_STATUS_ID,SUBMISSIONS_TEAM,SUBMISSIONS_FIGPERCENTAGE) \\
+                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                stmt = snowflake.createStatement(
+                    {
+                    sqlText: sql,
+
+                    binds: [rev_caseno,rev_contractnumber,rev_investAmount,rev_commAllowance,rev_negCommAllowance,rev_fpFee,
+                    rev_caseCount,rev_productid,NextSaturday,NextSaturday,rev_salesCode,0,1,
+                    1,0,rev_premiumId,rev_splitCommissionId,rev_dateSubmitted,rev_adviser,rev_statusId,rev_stateid,
+                    rev_createdBy,rev_createdOn,rev_modifiedBy,rev_modifiedOn,rev_caseStatusId,rev_team,rev_figpercentage]
+                    });
+                stmt.execute();
+
+                }
+
+            }
+
+        if (SubmissionId == '''' || DoSCD == 1)
+            {
+        	// logDebug("DoSCD: we are in line419");
+            submissionDate = NextSaturday;
+            clubSubmissionDate = NextSaturday;
+            createdOn = (SubmissionId == '''' || isReversal == 1) ? currDate : OrigCreatedOn;
+            modifiedOn = currDate;
+            //logDebug("Origcasestatusid: " + Origcasestatusid + "caseStatusId: "+caseStatusId + "statusid: "+statusid);
+                if((Origcasestatusid == 8 && caseStatusId == 2) &&  statusid == 9 ) // &&  statusid == 9 Open to Cancelled Manually and submitted
+                {
+                isLatest = 0;
+               // modifiedOn = OrigModifiedON;
+                createdOn = OrigCreatedOn;
+                dateSubmitted = OrigSubmissionDateSubmitted;
+               submissionDate = OrigSubmissionDate;
+               clubSubmissionDate= Orig51ClubSubmission;
+
+                }
+                else
+                {
+                isLatest = 1;
+                }
+
+            isReversal = 0;
+            isDeleted = 0;
+
+            // It will return true if caseLastModifiedBy is one of array values else false
+            if(!arr.includes(caseLastModifiedBy) && arr.includes(modifiedBy))
+                {
+                modifiedBy = caseLastModifiedBy;
+                }
+            if(caseStatusId ==null){
+            caseStatusId = Origcasestatusid;
+            }//for exception to open  cases
+            // Insert new record into SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS
+            sql = "";
+            sql = "INSERT INTO SOURCE.CLUB51.FIFTYONECLUB_SUBMISSIONS(SUBMISSIONS_CASE_ID,SUBMISSIONS_CONTRACTNUMBER, \\
+                SUBMISSIONS_INVESTAMOUNT,SUBMISSIONS_COMMALLOWANCE,SUBMISSIONS_NEGCOMMALLOWANCE,SUBMISSIONS_FPFEE, \\
+                SUBMISSIONS_CASECOUNT,SUBMISSIONS_PRODUCT_ID,SUBMISSIONS_SUBMISSIONDATE,SUBMISSIONS_51CLUBSUBMISSIONDATE, \\
+                SUBMISSIONS_SALESCODE,SUBMISSIONS_ISDELETED,SUBMISSIONS_ISLATEST,SUBMISSIONS_ISREVERSAL, \\
+                SUBMISSIONS_ISMANUALLYCANCELLED,SUBMISSIONS_DATESUBMITTED,SUBMISSIONS_PREMIUMID,SUBMISSIONS_SPLITCOMMISSIONID,SUBMISSIONS_ADVISERNAME, \\
+                SUBMISSIONS_STATUS_ID,SUBMISSIONS_STATE_ID,SUBMISSIONS_CREATEDBY,SUBMISSIONS_CREATEDON, \\
+                SUBMISSIONS_MODIFIEDBY,SUBMISSIONS_MODIFIEDON,SUBMISSIONS_CASE_STATUS_ID,SUBMISSIONS_TEAM,SUBMISSIONS_FIGPERCENTAGE) \\
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            stmt = snowflake.createStatement(
+                {
+                sqlText: sql,
+
+                binds: [caseno,contractnumber,investmentAmount,commAllowance,negCommAllowance,fpFee,
+                caseCount,productid,submissionDate,clubSubmissionDate,salesCode,isDeleted,isLatest,
+                isReversal,isManCancelled,dateSubmitted,premiumId,splitCommissionId,adviser,statusid,stateid,
+                createdBy,createdOn,modifiedBy,modifiedOn,caseStatusId,team,figPercentage]
+                });
+            stmt.execute();
+          	// logDebug("statusid: " + statusid);
+            }
+
+
+        }
+    catch (err)
+        {
+        return "Submission Failed: " + (col_count == 1) ? "Record " + SubmissionId + " does not exist" : err;   // Return a error indicator.
+        }
+
+    return ''1'';
+';
