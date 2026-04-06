@@ -1,2 +1,25 @@
-
-Cannot implicitly convert type 'string' to 'Ade.Club51.Lambda.Contract.Update.Models.ResponseData'
+INFO: SP returned: 1
+INFO: Executing submission SP: CALL dev_source.CLUB51.CREATEUPDATE_SUBMISSIONS('{
+  "submission": {
+    "new51ClubsubmissionId": "ecbe2bc9-5c6d-469d-be07-02893dca4938",
+    "contractNumber": "19604880",
+    "productName": "Orion - SP",
+    "investType": "Single Premium",
+    "investAmount": "23.00",
+    "payFrequency": null,
+    "payMethod": "Debit Order",
+    "commAllowance": "100.00",
+    "fpFee": "222.00",
+    "negCommAllowance": "100.00",
+    "negCommPercentage": "100.00",
+    "createdBy": "OneConnectBA",
+    "createdOn": "2026-03-23T03:33:35.601",
+    "modifiedBy": "OneConnectBA",
+    "modifiedOn": "2026-03-23T11:26:00.21"
+  }
+}')
+INFO: Submission SP returned: Submission Failed: Malformed JSON payload
+ERROR: UpdateContract failed: Submission SP failed: Submission Failed: Malformed JSON payload
+ERROR: Exception occurred in _adviserService.GetAdviserDetails - Submission SP failed: Submission Failed: Malformed JSON payload | StackTrace:    at Ade.Club51.Lambda.Contract.Update.Services.ContractUpdateService.UpdateContract(RequestData input) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Services\ContractUpdateService.cs:line 93
+   at Ade.Club51.Lambda.Contract.Update.Function.FunctionHandlerInternalAsync(RequestData input, ILambdaContext context) in C:\Users\x522256\51club\ade-51club-lambda-contract-update\Ade.Club51.Lambda.Contract.Update\Ade.Club51.Lambda.Contract.Update\Function.cs:line 133
+INFO: FunctionHandler execution completed.
