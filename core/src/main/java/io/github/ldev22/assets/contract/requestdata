@@ -1,0 +1,61 @@
+namespace Ade.Club51.Lambda.Contract.Update.Models
+{
+    public class RequestData
+    {
+        public string CaseId { get; set; }
+
+        public ContactDetail ContactDetail { get; set; }
+    }
+
+    public class ContactDetail
+    {
+        public string ContractDetailId { get; set; }
+        public string ContractNumber { get; set; }
+        public string ProductName { get; set; }
+        public string InvestType { get; set; }
+        public string InvestAmount { get; set; }
+        public string PayMethod { get; set; }
+        public string CommAllowance { get; set; }
+        public string FpFee { get; set; }
+        public string NegCommAllowance { get; set; }
+        public string NegCommPercentage { get; set; }
+        public string CreatedBy { get; set; }
+        public DateTime CreatedOn { get; set; }
+        public string ModifiedBy { get; set; }
+        public DateTime ModifiedOn { get; set; }
+        public object PayFrequency { get; internal set; }
+    }
+
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public class SubmissionRequest
+    {
+        public Submission Submission { get; set; } = new Submission();
+    }
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public class Submission
+    {
+        public string CaseCount { get; set; }
+        public string Adviser { get; set; } = string.Empty;
+        public string CaseNumber { get; set; } = string.Empty;
+        public string CaseStatusId { get; set; } = string.Empty;
+        public string CommAllowance { get; set; } = string.Empty;
+        public string ContractNumber { get; set; } = string.Empty;
+        public string CreatedBy { get; set; } = string.Empty;
+        public string FigPercentage { get; set; } = string.Empty;
+        public string FpFee { get; set; } = string.Empty;
+        public string InvestmentAmount { get; set; } = string.Empty;
+        public string ModifiedBy { get; set; } = string.Empty;
+        public string NegCommAllowance { get; set; } = string.Empty;
+        public string New51ClubsubmissionId { get; set; } = string.Empty;
+        public string PremiumId { get; set; } = string.Empty;
+        public string ProductCode { get; set; } = string.Empty;
+        public string ProductId { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
+        public string SalesCode { get; set; } = string.Empty;
+        public string SplitCommissionId { get; set; } = string.Empty;
+        public string StatusReason { get; set; } = string.Empty;
+        public string Team { get; set; } = string.Empty;
+    }
+}
+
+'RequestData' does not contain a definition for 'Submission' and no accessible extension method 'Submission' accepting a first argument of type 'RequestData' could be found (are you missing a using directive or an assembly reference?)
