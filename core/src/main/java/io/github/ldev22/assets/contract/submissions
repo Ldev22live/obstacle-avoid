@@ -1,0 +1,371 @@
+using Ade.Lambda.Club51.Submission.Update.Config;
+using Ade.Lambda.Club51.Submission.Update.Interface;
+using Ade.Lambda.Club51.Submission.Update.Models;
+using Amazon.Lambda.Core;
+using Newtonsoft.Json;
+using Snowflake.Data.Client;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace Ade.Lambda.Club51.Submission.Update.Services
+{
+    public class DatabaseService : IDatabaseService
+    {
+        private readonly DatabaseConfig _config;
+
+
+        public DatabaseService(DatabaseConfig config)
+        {
+            _config = config;
+        }
+
+
+        //public async Task<SubmissionResponse> ExecuteStoredProcAsync(SubmissionRequest request)
+        //{
+        //    LambdaLogger.Log("INFO: Starting ExecuteStoredProcAsync...");
+
+        //    var options = new JsonSerializerOptions
+        //    {
+        //        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        //        WriteIndented = true
+        //    };
+
+        //    try
+        //    {
+        //        // Serialize request safely for SQL
+        //        string jsonRequest = JsonSerializer.Serialize(request, options);
+        //        string sanitizedJson = "'" + jsonRequest.Replace("'", "''") + "'"; // Escape single quotes
+
+        //        string db = _config.Database;
+        //        string schema = _config.Schema;
+        //        string proc = "CREATEUPDATE_SUBMISSIONS";
+
+        //        string callStatement = $"CALL {db}.{schema}.{proc}({sanitizedJson})";
+
+        //        LambdaLogger.Log($"INFO: Prepared Snowflake procedure call: {callStatement}");
+
+        //        using (var connection = new SnowflakeDbConnection { ConnectionString = _config.GetConnectionString() })
+        //        {
+        //            await connection.OpenAsync();
+        //            LambdaLogger.Log("INFO: Connected to Snowflake.");
+
+        //            using (var command = connection.CreateCommand())
+        //            {
+        //                command.CommandText = callStatement;
+        //                command.CommandType = CommandType.Text;
+
+        //                LambdaLogger.Log("INFO: Executing stored procedure...");
+        //                using var reader = await command.ExecuteReaderAsync();
+
+        //                string responseValue = null;
+        //                while (await reader.ReadAsync())
+        //                {
+        //                    responseValue = reader[0]?.ToString();
+        //                    LambdaLogger.Log($"INFO: Stored procedure response: {responseValue}");
+        //                }
+
+        //                if (string.IsNullOrWhiteSpace(responseValue))
+        //                {
+        //                    LambdaLogger.Log("WARN: Stored procedure returned no response.");
+        //                    throw new InvalidOperationException("Stored procedure did not return a response.");
+        //                }
+
+
+        //                var response = new SubmissionResponse
+        //                {
+        //                    Data = new Data { Result = responseValue },
+        //                    IsValid = true,
+        //                    StatusCode = 200,
+        //                    Messages = new List<string> { "Stored procedure executed successfully." },
+        //                    Errors = new List<string>()
+        //                };
+        //                LambdaLogger.Log($"Response 1: {response}");
+        //                return response;
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        LambdaLogger.Log($"ERROR: Exception in ExecuteStoredProcAsync: {ex.Message}");
+        //        LambdaLogger.Log($"ERROR: Stack Trace: {ex.StackTrace}");
+
+        //        return new SubmissionResponse
+        //        {
+        //            Data = new Data { Result = null },
+        //            IsValid = false,
+        //            StatusCode = 500,
+        //            Messages = new List<string> { "An error occurred while executing the stored procedure." },
+        //            Errors = new List<string> { ex.Message }
+        //        };
+        //    }
+        //}
+
+        //public async Task<SubmissionResponse> ExecuteStoredProcAsync(SubmissionRequest request)
+        //{
+        //    LambdaLogger.Log("INFO: Starting ExecuteStoredProcAsync workflow...");
+
+        //    var options = new JsonSerializerOptions
+        //    {
+        //        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        //        WriteIndented = true,
+        //        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        //    };
+
+        //    try
+        //    {
+        //        // Validate request
+        //        if (request?.Submission == null)
+        //        {
+        //            return new SubmissionResponse
+        //            {
+        //                IsValid = false,
+        //                StatusCode = 400,
+        //                Messages = new List<string> { "Submission payload is required." },
+        //                Errors = new List<string> { "Invalid request object." }
+        //            };
+        //        }
+
+        //        // Ensure submissionId exists
+        //        string submissionId = request.Submission.New51ClubsubmissionId?.Replace("'", "''");
+        //        if (string.IsNullOrWhiteSpace(submissionId))
+        //            throw new Exception("SubmissionId must be provided.");
+
+        //        // Serialize and sanitize request JSON for DB call
+        //        string jsonRequest = System.Text.Json.JsonSerializer.Serialize(request, options);
+        //        string sanitizedJson = "'" + jsonRequest.Replace("'", "''") + "'";
+
+        //        string db = _config.Database;
+        //        string schema = _config.Schema;
+        //        string proc = "CREATEUPDATE_SUBMISSIONS";
+        //        string callStatement = $"CALL {db}.{schema}.{proc}({sanitizedJson})";
+
+        //        LambdaLogger.Log($"INFO: Calling stored procedure → {callStatement}");
+
+        //        using var connection = new SnowflakeDbConnection { ConnectionString = _config.GetConnectionString() };
+        //        await connection.OpenAsync();
+
+        //        using (var command = connection.CreateCommand())
+        //        {
+        //            command.CommandText = callStatement;
+        //            command.CommandType = CommandType.Text;
+
+        //            using var reader = await command.ExecuteReaderAsync();
+        //            while (await reader.ReadAsync())
+        //            {
+        //                string caseId = reader[0]?.ToString();
+        //                LambdaLogger.Log($"INFO: Stored proc returned caseId = {caseId}");
+        //            }
+        //        }
+
+        //        // Clean up the JSON before returning it
+        //        string cleanedJson = System.Text.Json.JsonSerializer.Serialize(request, options);
+
+        //        var submissionResponse = new SubmissionResponse
+        //        {
+        //            Data = new Data { Result = cleanedJson },
+        //            IsValid = true,
+        //            StatusCode = 200,
+        //            Messages = new List<string> { "Stored procedure executed successfully." },
+        //            Errors = new List<string>()
+        //        };
+
+        //        LambdaLogger.Log($"INFO: Returning cleaned ClientResponse JSON → {cleanedJson}");
+
+        //        return submissionResponse;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        LambdaLogger.Log($"ERROR: {ex}");
+        //        return new SubmissionResponse
+        //        {
+        //            Data = new Data { Result = null },
+        //            IsValid = false,
+        //            StatusCode = 500,
+        //            Messages = new List<string> { "Database operation failed." },
+        //            Errors = new List<string> { ex.Message }
+        //        };
+        //    }
+        //}
+
+        public async Task<SubmissionResponse> ExecuteStoredProcAsync(SubmissionRequest request)
+        {
+            LambdaLogger.Log("INFO: Starting ExecuteStoredProcAsync workflow...");
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+
+            try
+            {
+                // Validate request
+                if (request?.Submission == null)
+                {
+                    return new SubmissionResponse
+                    {
+                        IsValid = false,
+                        StatusCode = 400,
+                        Messages = new List<string> { "Submission payload is required." },
+                        Errors = new List<string> { "Invalid request object." }
+                    };
+                }
+
+                // Ensure submissionId exists
+                string submissionId = request.Submission.New51ClubsubmissionId?.Replace("'", "''");
+                if (string.IsNullOrWhiteSpace(submissionId))
+                    throw new Exception("SubmissionId must be provided.");
+
+                // Serialize and sanitize request JSON for DB call
+                string jsonRequest = System.Text.Json.JsonSerializer.Serialize(request, options);
+                string sanitizedJson = "'" + jsonRequest.Replace("'", "''") + "'";
+
+                string db = _config.Database;
+                string schema = _config.Schema;
+                string proc = "CREATEUPDATE_SUBMISSIONS";
+                string callStatement = $"CALL {db}.{schema}.{proc}({sanitizedJson})";
+
+                LambdaLogger.Log($"INFO: Calling stored procedure → {callStatement}");
+
+                using var connection = new SnowflakeDbConnection { ConnectionString = _config.GetConnectionString() };
+                await connection.OpenAsync();
+
+                //using (var command = connection.CreateCommand())
+                //{
+                //    command.CommandText = callStatement;
+                //    command.CommandType = CommandType.Text;
+                //    await command.ExecuteNonQueryAsync();
+                //}
+
+                //var caseId = request.Submission.CaseNumber;
+                //var salesCode = request.Submission.SalesCode;
+                //var productId = request.Submission.ProductId;
+                //LambdaLogger.Log("INFO: Stored procedure executed successfully.");
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = callStatement;
+                    command.CommandType = CommandType.Text;
+
+                    LambdaLogger.Log($"INFO: Executing stored procedure: {callStatement}");
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        // Check if the stored procedure returned any result sets
+                        if (reader.HasRows)
+                        {
+                            var rowCount = 0;
+                            while (await reader.ReadAsync())
+                            {
+                                rowCount++;
+                                var rowData = new StringBuilder();
+
+                                for (int i = 0; i < reader.FieldCount; i++)
+                                {
+                                    var columnName = reader.GetName(i);
+                                    var value = reader.IsDBNull(i) ? "NULL" : reader.GetValue(i)?.ToString();
+                                    rowData.Append($"{columnName}: {value}, ");
+                                }
+
+                                LambdaLogger.Log($"INFO: SP Row {rowCount}: {rowData}");
+                            }
+
+                            LambdaLogger.Log($"INFO: Stored procedure returned {rowCount} rows.");
+                        }
+                        else
+                        {
+                            LambdaLogger.Log("INFO: Stored procedure executed successfully (no rows returned).");
+                        }
+                    }
+                }
+
+                var caseId = request.Submission.CaseNumber;
+                var salesCode = request.Submission.SalesCode;
+                var productId = request.Submission.New51ClubsubmissionId;
+
+                LambdaLogger.Log($"INFO: Parameters for verification query — CaseId: {caseId}, SalesCode: {salesCode}, ProductId: {productId}");
+
+                var queryBuilder = new StringBuilder();
+                queryBuilder.AppendLine($"SELECT SUBMISSIONS_ID FROM {db}.CLUB51.FIFTYONECLUB_SUBMISSIONS");
+                queryBuilder.AppendLine("WHERE SUBMISSIONS_ENDDATE = '9999-12-31'");
+                queryBuilder.AppendLine("AND SUBMISSIONS_ISREVERSAL = 0");
+                queryBuilder.AppendLine($"AND SUBMISSIONS_CASE_ID = '{caseId?.Replace("'", "''")}'");
+                queryBuilder.AppendLine("AND SUBMISSIONS_ISLATEST = 1");
+                queryBuilder.AppendLine($"AND SUBMISSIONS_SALESCODE = '{salesCode?.Replace("'", "''")}'");
+
+                //var queryBuilder = new StringBuilder();
+                //queryBuilder.AppendLine("SELECT SUBMISSIONS_ID FROM CLUB51.FIFTYONECLUB_SUBMISSIONS");
+                //queryBuilder.AppendLine("WHERE SUBMISSIONS_ENDDATE = '9999-12-31'");
+                //queryBuilder.AppendLine("AND SUBMISSIONS_ISREVERSAL = 0");
+                //queryBuilder.AppendLine($"AND SUBMISSIONS_CASE_ID = '{caseId?.Replace("'", "''")}'");
+                //queryBuilder.AppendLine("AND SUBMISSIONS_ISLATEST = 1");
+                //queryBuilder.AppendLine($"AND SUBMISSIONS_SALESCODE = '{salesCode?.Replace("'", "''")}'");
+                //queryBuilder.AppendLine($"AND SUBMISSIONS_PRODUCT_ID = '{productId?.Replace("'", "''")}'");
+
+                //var queryBuilder = new StringBuilder();
+                //queryBuilder.AppendLine($"SELECT SUB.\"SUBMISSIONS_ID\"");
+                //queryBuilder.AppendLine($"FROM FIFTYONECLUB_SUBMISSIONS SUB");
+                //queryBuilder.AppendLine($"INNER JOIN FIFTYONECLUB_CASES C ON C.\"CASE_CONTRACTNUMBER\" = SUB.\"SUBMISSIONS_CONTRACTNUMBER\"");
+                //queryBuilder.AppendLine($"WHERE C.\"CASE_CONTRACTNUMBER\" = '{contractNumber.Replace("'", "''")}'");
+                //queryBuilder.AppendLine("  AND C.\"CASE_ENDDATE\" = '9999-12-31'::DATE");
+                //queryBuilder.AppendLine("  AND SUB.\"SUBMISSIONS_ENDDATE\" = '9999-12-31'::DATE");
+                //queryBuilder.AppendLine("  AND SUB.\"SUBMISSIONS_ISLATEST\" = 1;");
+                string query = queryBuilder.ToString();
+                LambdaLogger.Log($"INFO: Executing follow-up SQL query → {query}");
+
+                string fetchedSubmissionId = null;
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = query;
+                    command.CommandType = CommandType.Text;
+
+                    using var reader = await command.ExecuteReaderAsync();
+                    if (await reader.ReadAsync())
+                    {
+                        fetchedSubmissionId = reader["SUBMISSIONS_ID"]?.ToString();
+                        LambdaLogger.Log($"INFO: Query returned SUBMISSIONS_ID = {fetchedSubmissionId}");
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(fetchedSubmissionId))
+                {
+                    LambdaLogger.Log("WARN: No SUBMISSIONS_ID found matching query criteria.");
+                }
+
+                var submissionResponse = new SubmissionResponse
+                {
+                    Data = new Data { Result = fetchedSubmissionId },
+                    IsValid = true,
+                    StatusCode = 200,
+                    Messages = new List<string> { "Stored procedure and verification query executed successfully." },
+                    Errors = new List<string>()
+                };
+
+                LambdaLogger.Log($"INFO: Returning SubmissionResponse with submissionId = {fetchedSubmissionId}");
+                return submissionResponse;
+            }
+            catch (Exception ex)
+            {
+                LambdaLogger.Log($"ERROR: {ex}");
+                return new SubmissionResponse
+                {
+                    Data = new Data { Result = null },
+                    IsValid = false,
+                    StatusCode = 500,
+                    Messages = new List<string> { "Database operation failed." },
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+    }
+}
