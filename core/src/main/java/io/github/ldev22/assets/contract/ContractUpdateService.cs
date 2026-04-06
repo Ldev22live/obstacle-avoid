@@ -181,23 +181,29 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
         {
             var submission = new Dictionary<string, object?>();
 
-            if (input.ContactDetail != null)
+            if (input.Submission != null)
             {
-                submission["new51ClubsubmissionId"] = input.ContactDetail.ContractDetailId;
-                submission["contractNumber"] = input.ContactDetail.ContractNumber;
-                submission["productName"] = input.ContactDetail.ProductName;
-                submission["investType"] = input.ContactDetail.InvestType;
-                submission["investAmount"] = input.ContactDetail.InvestAmount;
-                submission["payFrequency"] = input.ContactDetail.PayFrequency;
-                submission["payMethod"] = input.ContactDetail.PayMethod;
-                submission["commAllowance"] = input.ContactDetail.CommAllowance;
-                submission["fpFee"] = input.ContactDetail.FpFee;
-                submission["negCommAllowance"] = input.ContactDetail.NegCommAllowance;
-                submission["negCommPercentage"] = input.ContactDetail.NegCommPercentage;
-                submission["createdBy"] = input.ContactDetail.CreatedBy;
-                submission["createdOn"] = input.ContactDetail.CreatedOn;
-                submission["modifiedBy"] = input.ContactDetail.ModifiedBy;
-                submission["modifiedOn"] = input.ContactDetail.ModifiedOn;
+                submission["caseCount"] = input.Submission.CaseCount;
+                submission["adviser"] = input.Submission.Adviser;
+                submission["caseNumber"] = input.Submission.CaseNumber;
+                submission["caseStatusId"] = input.Submission.CaseStatusId;
+                submission["commAllowance"] = input.Submission.CommAllowance;
+                submission["contractNumber"] = input.Submission.ContractNumber;
+                submission["createdBy"] = input.Submission.CreatedBy;
+                submission["figPercentage"] = input.Submission.FigPercentage;
+                submission["fpFee"] = input.Submission.FpFee;
+                submission["investmentAmount"] = input.Submission.InvestmentAmount;
+                submission["modifiedBy"] = input.Submission.ModifiedBy;
+                submission["negCommAllowance"] = input.Submission.NegCommAllowance;
+                submission["new51ClubsubmissionId"] = input.Submission.New51ClubsubmissionId;
+                submission["premiumId"] = input.Submission.PremiumId;
+                submission["productCode"] = input.Submission.ProductCode;
+                submission["productId"] = input.Submission.ProductId;
+                submission["productName"] = input.Submission.ProductName;
+                submission["salesCode"] = input.Submission.SalesCode;
+                submission["splitCommissionId"] = input.Submission.SplitCommissionId;
+                submission["statusReason"] = input.Submission.StatusReason;
+                submission["team"] = input.Submission.Team;
             }
 
             return new Dictionary<string, object>
