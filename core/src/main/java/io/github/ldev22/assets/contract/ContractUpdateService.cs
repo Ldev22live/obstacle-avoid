@@ -74,70 +74,6 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                     throw new InvalidOperationException($"SP failed: {spResult}");
                 }
 
-                // Execute Submission Update SP
-                // First, query for existing newSubmissionId using caseId
-                string? newSubmissionId = null;
-                using (var submissionIdCommand = connection.CreateCommand())
-                {
-                    submissionIdCommand.CommandText = $@"
-                        SELECT SUBMISSIONS_ID
-                        FROM {db}.{schema}.FIFTYONECLUB_SUBMISSIONS
-                        WHERE SUBMISSIONS_CASE_ID = '{input.CaseId}'
-                          AND SUBMISSIONS_ENDDATE = '9999-12-31'::DATE
-                          AND SUBMISSIONS_ISLATEST = 1
-                          AND SUBMISSIONS_ISDELETED = 0
-                        ORDER BY SUBMISSIONS_MODIFIEDON DESC
-                        LIMIT 1";
-                    submissionIdCommand.CommandType = CommandType.Text;
-                    LambdaLogger.Log($"INFO: LambdaLogger: {LambdaLogger.Log}");
-                    LambdaLogger.Log($"INFO: Querying for newSubmissionId: {submissionIdCommand.CommandText}");
-
-                    using var submissionIdReader = submissionIdCommand.ExecuteReader();
-                    if (submissionIdReader.Read())
-                    {
-                        newSubmissionId = submissionIdReader[0]?.ToString();
-                        LambdaLogger.Log($"INFO: Found newSubmissionId: {newSubmissionId}");
-                    }
-                    else
-                    {
-                        LambdaLogger.Log("WARN: No existing submission found for this case - will create new");
-                    }
-                }
-
-                var submissionProcName = Environment.GetEnvironmentVariable("SUBMISSION_PROC") ?? "CREATEUPDATE_SUBMISSIONS";
-                var submissionPayload = CreateSubmissionPayload(input, newSubmissionId);
-                var submissionJson = System.Text.Json.JsonSerializer.Serialize(submissionPayload, options);
-
-                // Validate submission payload is not empty
-                if (string.IsNullOrWhiteSpace(submissionJson) || submissionJson == "{\"submission\":{}}")
-                {
-                    LambdaLogger.Log("ERROR: Submission payload is empty - ContactDetail data required");
-                    throw new InvalidOperationException("Submission payload is empty. ContactDetail with ContractDetailId is required.");
-                }
-
-                var escapedSubmissionJson = "'" + submissionJson.Replace("'", "''") + "'";
-
-                using (var submissionCommand = connection.CreateCommand())
-                {
-                    submissionCommand.CommandText = $"CALL {db}.{schema}.{submissionProcName}({escapedSubmissionJson})";
-                    submissionCommand.CommandType = CommandType.Text;
-
-                    LambdaLogger.Log($"INFO: Executing submission SP: {submissionCommand.CommandText}");
-
-                    using var submissionReader = submissionCommand.ExecuteReader();
-                    string? submissionResult = null;
-                    while (submissionReader.Read())
-                    {
-                        submissionResult = submissionReader[0]?.ToString();
-                        LambdaLogger.Log($"INFO: Submission SP returned: {submissionResult}");
-                    }
-
-                    if (string.IsNullOrWhiteSpace(submissionResult) || submissionResult.StartsWith("Submission Failed"))
-                    {
-                        throw new InvalidOperationException($"Submission SP failed: {submissionResult}");
-                    }
-                }
-
                 // Query for the new contract detail ID matching CaseQueries pattern - get most recent
                 string newContractDetailId;
                 using (var idCommand = connection.CreateCommand())
@@ -212,66 +148,6 @@ namespace Ade.Club51.Lambda.Contract.Update.Services
                 {
                     ["contractDetails"] = new[] { contractDetail }
                 }
-            };
-        }
-
-        private Dictionary<string, object> CreateSubmissionPayload(RequestData input, string? newSubmissionId)
-        {
-            var submission = new Dictionary<string, object?>();
-
-            // Map ContactDetail fields to Submission fields where they align
-            if (input.ContactDetail != null)
-            {
-                // Use queried newSubmissionId if available, otherwise fall back to ContractDetailId
-                submission["new51ClubsubmissionId"] = newSubmissionId ?? input.ContactDetail.ContractDetailId;
-                submission["contractNumber"] = input.ContactDetail.ContractNumber;
-                submission["productName"] = input.ContactDetail.ProductName;
-                submission["commAllowance"] = input.ContactDetail.CommAllowance;
-                submission["fpFee"] = input.ContactDetail.FpFee;
-                submission["negCommAllowance"] = input.ContactDetail.NegCommAllowance;
-                submission["createdBy"] = input.ContactDetail.CreatedBy;
-                submission["modifiedBy"] = input.ContactDetail.ModifiedBy;
-            }
-
-            // Use CaseId as caseNumber if Submission data not provided
-            submission["caseNumber"] = input.CaseId ?? "0";
-
-            // Use input.Submission for additional fields if available
-            if (input.Submission != null)
-            {
-                submission["caseCount"] = input.Submission.CaseCount ?? "-1.00";
-                submission["adviser"] = input.Submission.Adviser ?? "";
-                submission["caseStatusId"] = input.Submission.CaseStatusId ?? "8";
-                submission["figPercentage"] = input.Submission.FigPercentage ?? "100";
-                submission["investmentAmount"] = input.Submission.InvestmentAmount ?? input.ContactDetail?.InvestAmount ?? "0";
-                submission["premiumId"] = input.Submission.PremiumId ?? $"OMP-{input.ContactDetail?.ContractNumber}";
-                submission["productCode"] = input.Submission.ProductCode ?? "OMP";
-                submission["productId"] = input.Submission.ProductId ?? "100";
-                submission["salesCode"] = input.Submission.SalesCode ?? "630568";
-                submission["splitCommissionId"] = input.Submission.SplitCommissionId ?? $"630568-{input.ContactDetail?.ContractNumber}";
-                submission["statusReason"] = input.Submission.StatusReason ?? "Open";
-                submission["team"] = input.Submission.Team ?? "Cheetah (AYMA)";
-            }
-            else
-            {
-                // Default values when no Submission data provided
-                submission["caseCount"] = "-1.00";
-                submission["adviser"] = "";
-                submission["caseStatusId"] = "8";
-                submission["figPercentage"] = "100";
-                submission["investmentAmount"] = input.ContactDetail?.InvestAmount ?? "0";
-                submission["premiumId"] = $"OMP-{input.ContactDetail?.ContractNumber}";
-                submission["productCode"] = "OMP";
-                submission["productId"] = "100";
-                submission["salesCode"] = "630568";
-                submission["splitCommissionId"] = $"630568-{input.ContactDetail?.ContractNumber}";
-                submission["statusReason"] = "Open";
-                submission["team"] = "Cheetah (AYMA)";
-            }
-
-            return new Dictionary<string, object>
-            {
-                ["submission"] = submission
             };
         }
 
