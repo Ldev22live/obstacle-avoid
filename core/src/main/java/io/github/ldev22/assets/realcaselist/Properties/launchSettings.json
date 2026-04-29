@@ -1,0 +1,24 @@
+{
+  "profiles": {
+    "Dev": {
+      "commandName": "Executable",
+      "executablePath": "%USERPROFILE%\\.dotnet\\tools\\dotnet-lambda-test-tool-8.0.exe",
+      "commandLineArgs": "--port 5051",
+      "workingDirectory": ".\\bin\\Debug\\net8.0",
+      "environmentVariables": {
+        "DT_CLUSTER_ID": "1889348772",
+        "DT_CONNECTION_AUTH_TOKEN": "dt0a01.pao86152.8eb92a31f67f3d18bfa62ec56caf6f1fefeb09015bee0e222169d3e4f5f7afe3",
+        "DT_CONNECTION_BASE_URL": "https://pao86152.live.dynatrace.com",
+        "DT_TENANT": "pao86152",
+        "SnowflakeConnectionString": "account=pg70172;user=SRV_DAE_TECH;password=JR_='F9&[KGYqM]7;scheme=https;host=pg70172.eu-west-1.snowflakecomputing.com;port=443;db=DEV_SOURCE;schema=CLUB51;insecureMode=true",
+        "useAwsLambdaConfigurations": "false"
+      }
+    },
+    "Mock Lambda Test Tool": {
+      "commandName": "Executable",
+      "commandLineArgs": "--port 5050",
+      "workingDirectory": ".\\bin\\$(Configuration)\\net8.0",
+      "executablePath": "%USERPROFILE%\\.dotnet\\tools\\dotnet-lambda-test-tool-8.0.exe"
+    }
+  }
+}
