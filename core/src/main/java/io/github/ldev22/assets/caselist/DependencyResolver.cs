@@ -28,9 +28,9 @@ namespace Ade.Club51.Case.List.DependencyInjection
 
         private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
-            services.AddScoped<IClubSearchService, ClubSearchService>();
-            services.AddSingleton<ISnowflakeConnectionFactory, SnowflakeConnectionFactory>();
             services.AddSingleton<IConfiguration>(configuration);
+            services.AddSingleton<ISnowflakeConnectionFactory, SnowflakeConnectionFactory>();
+            services.AddScoped<IClubSearchService, ClubSearchService>();
         }
 
         private static IConfiguration GetConfiguration()
