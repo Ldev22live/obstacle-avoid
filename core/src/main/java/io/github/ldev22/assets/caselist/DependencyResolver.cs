@@ -8,7 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -33,8 +35,10 @@ namespace Ade.Club51.Case.List.DependencyInjection
 
         private static IConfiguration GetConfiguration()
         {
+            var basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+                ?? Directory.GetCurrentDirectory();
             return new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .SetBasePath(basePath)
                         .AddJsonFile("appsettings.json", optional: true)
                         .AddEnvironmentVariables()
                         .Build();
