@@ -3,6 +3,7 @@ using Ade.Club51.Case.List.Helpers;
 
 using Ade.Club51.Case.List.Services;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -34,6 +35,7 @@ namespace Ade.Club51.Case.List.DependencyInjection
         {
             return new ConfigurationBuilder()
                         .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddJsonFile("appsettings.json", optional: true)
                         .AddEnvironmentVariables()
                         .Build();
         }
