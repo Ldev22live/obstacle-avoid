@@ -30,3 +30,12 @@
     <PackageReference Include="Snowflake.Data" Version="4.2.0" />
   </ItemGroup>
 </Project>
+
+ error NU1605:
+      Warning As Error: Detected package downgrade: Microsoft.Extensions.Configuration.Binder from 9.0.0 to 8.0.0. Reference the package directly from
+       the project to select a different version.
+       Ade.Club51.Case.List -> Dynatrace.OpenTelemetry 1.325.1 -> OpenTelemetry 1.13.1 -> Microsoft.Extensions.Logging.Configuration 9.0.0 -> Microsof
+      t.Extensions.Configuration.Binder (>= 9.0.0)
+       Ade.Club51.Case.List -> Microsoft.Extensions.Configuration.Binder (>= 8.0.0)
+
+Restore failed with 1 error(s) and 2 warning(s) in 1,7s
