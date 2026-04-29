@@ -1,0 +1,4 @@
+System.MissingMethodException: Cannot dynamically create an instance of type 'Ade.Club51.Case.List.Function'. Reason: No parameterless constructor defined.
+   at System.RuntimeType.ActivatorCache..ctor(RuntimeType rt)
+   at System.RuntimeType.CreateInstanceDefaultCtor(Boolean publicOnly, Boolean wrapExceptions)
+   at Amazon.Lambda.TestTool.Runtime.LambdaExecutor.ExecuteAsync(ExecutionRequest request) in C:\build\Tools\LambdaTestTool\src\Amazon.Lambda.TestTool\Runtime\LambdaExecutor.cs:line 65
