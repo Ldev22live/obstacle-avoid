@@ -1,0 +1,29 @@
+{
+  "profiles": {
+    "Ade.Lambda.club51.Case.Create.Update": {
+      "commandName": "Executable",
+      "executablePath": "%USERPROFILE%\\.dotnet\\tools\\dotnet-lambda-test-tool-8.0.exe",
+      "commandLineArgs": "--port 5051",
+      "workingDirectory": ".\\bin\\Debug\\net8.0",
+      "environmentVariables": {
+        "isMock": "true",
+        "edr_account": "pg70172",
+        "edr_db": "source",
+        "edr_schema": "CLUB51",
+        "edr_proc": "CLUB51",
+        "edr_server": "pg70172.eu-west-1.snowflakecomputing.com",
+        "edr_UserId": "SRV_DAE_TECH",
+        "edr_Password": "JR_='F9&[KGYqM]7",
+        "edr_port": "443",
+        "table_case_details": "FIFTYONECLUB_CASE",
+        "table_financial_info": "FIFTYONECLUB_CONTRACTDETAIL",
+        "table_contract_details": "FIFTYONECLUB_EXCEPTIONEXCLUSIONLOG",
+        "table_exceptions": "FIFTYONECLUB_FINANCIALINFORMATION",
+        "DT_CLUSTER_ID": "1889348772",
+        "DT_CONNECTION_AUTH_TOKEN": "dt0a01.pao86152.8eb92a31f67f3d18bfa62ec56caf6f1fefeb09015bee0e222169d3e4f5f7afe3",
+        "DT_CONNECTION_BASE_URL": "https://pao86152.live.dynatrace.com",
+        "DT_TENANT": "pao86152",
+        "DT_USE_AWS_LAMBDA_CONFIGURATIONS": "false"
+      }
+    }
+}
