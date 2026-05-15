@@ -133,7 +133,6 @@ namespace Ade.Club51.Case.List.Services
             sqlBuilder.AppendLine("SELECT ");
             sqlBuilder.AppendLine("    m.CASE_ID AS CASEID,");
             sqlBuilder.AppendLine("    m.CASE_SOURCE AS SOURCE,");
-            sqlBuilder.AppendLine("    m.CASE_SOURCE AS SOURCE,");
             sqlBuilder.AppendLine("    m.CASE_CONTRACTNUMBER AS CONTRACTNUMBER,");
             sqlBuilder.AppendLine("    m.CASE_CUSTOMERLASTNAME AS CUSTOMERLASTNAME,");
             sqlBuilder.AppendLine("    m.CASE_CUSTOMERTINITIALS AS CUSTOMERINITIALS,");

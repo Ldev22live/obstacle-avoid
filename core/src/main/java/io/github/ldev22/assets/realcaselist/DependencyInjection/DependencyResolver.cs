@@ -7,7 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,17 +27,21 @@ namespace Ade.Club51.Case.List.DependencyInjection
 
         private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
-            services.AddScoped<IClubSearchService, ClubSearchService>();
-            services.AddSingleton<ISnowflakeConnectionFactory, SnowflakeConnectionFactory>();
             services.AddSingleton<IConfiguration>(configuration);
+            services.AddSingleton<ISnowflakeConnectionFactory, SnowflakeConnectionFactory>();
+            services.AddScoped<IClubSearchService, ClubSearchService>();
         }
 
         private static IConfiguration GetConfiguration()
         {
+            var basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+                ?? Directory.GetCurrentDirectory();
             return new ConfigurationBuilder()
-                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .SetBasePath(basePath)
+                        .AddJsonFile("appsettings.json", optional: true)
                         .AddEnvironmentVariables()
                         .Build();
         }
     }
 }
+dotnet build

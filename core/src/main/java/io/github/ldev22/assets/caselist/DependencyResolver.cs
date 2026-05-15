@@ -37,6 +37,9 @@ namespace Ade.Club51.Case.List.DependencyInjection
         {
             var basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
                 ?? Directory.GetCurrentDirectory();
+            Console.WriteLine($"Configuration base path: {basePath}");
+            Console.WriteLine($"Looking for appsettings.json at: {Path.Combine(basePath, "appsettings.json")}");
+            Console.WriteLine($"File exists: {File.Exists(Path.Combine(basePath, "appsettings.json"))}");
             return new ConfigurationBuilder()
                         .SetBasePath(basePath)
                         .AddJsonFile("appsettings.json", optional: true)

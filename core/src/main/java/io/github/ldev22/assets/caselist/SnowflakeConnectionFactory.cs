@@ -21,9 +21,15 @@ namespace Ade.Club51.Case.List.Helpers
 
         public IDbConnection CreateConnection()
         {
+            var connectionString = _configuration["SnowflakeConnectionString"];
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("SnowflakeConnectionString is null or empty. Check appsettings.json or environment variables.");
+            }
+            Console.WriteLine($"Connection string length: {connectionString.Length}");
             IDbConnection conn = new SnowflakeDbConnection
             {
-                ConnectionString = _configuration["SnowflakeConnectionString"]
+                ConnectionString = connectionString
             };
             return conn;
         }

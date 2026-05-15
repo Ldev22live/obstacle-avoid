@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "Mock Lambda Test Tool": {
+      "commandName": "Executable",
+      "commandLineArgs": "--port 5050",
+      "workingDirectory": ".\\bin\\$(Configuration)\\net8.0",
+      "executablePath": "%USERPROFILE%\\.dotnet\\tools\\dotnet-lambda-test-tool-8.0.exe",
+      "environmentVariables": {
+        "SnowflakeConnectionString": "account=pg70172;user=SRV_DAE_TECH;password=JR_='F9&[KGYqM]7;host=pg70172.eu-west-1.snowflakecomputing.com;port=443;db=DEV_SOURCE;schema=CLUB51",
+        "useAwsLambdaConfigurations": "false"
+      }
+    }
+  }
+}

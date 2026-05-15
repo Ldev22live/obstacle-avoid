@@ -30,9 +30,15 @@ namespace Ade.Club51.Case.List
         public Function() : this(DependencyResolver.GetServiceProvider().GetService<IClubSearchService>())
         {
             LambdaLogger.Log("Initialization started...");
-            DynatraceSetup.InitializeLogging();
-            _tracerProvider = GetDynatraceTraceProvider();
-
+            try
+            {
+                DynatraceSetup.InitializeLogging();
+                _tracerProvider = GetDynatraceTraceProvider();
+            }
+            catch (Exception ex)
+            {
+                LambdaLogger.Log($"Dynatrace initialization skipped: {ex.Message}");
+            }
             LambdaLogger.Log("Initialization completed...");
         }
 
@@ -44,6 +50,13 @@ namespace Ade.Club51.Case.List
         public async Task<GenericValidatableResponse<List<ClientResponse>>> FunctionHandler(JObject input, ILambdaContext context)
         {
             LambdaLogger.Log($"Lambda ARN: {context.InvokedFunctionArn}");
+
+            // Skip tracing if tracerProvider is null (local testing)
+            if (_tracerProvider == null)
+            {
+                LambdaLogger.Log("Tracing disabled - running without Dynatrace");
+                return await FunctionHandlerInternalAsync(input, context);
+            }
 
             // Extract propagation context from the ILambdaContext
             var propagationContext = AwsLambdaHelpers.ExtractPropagationContext(context);
